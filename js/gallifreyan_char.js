@@ -83,6 +83,36 @@ Arc.prototype._draw = function(ctx) {
     ctx.arc(this.circle.center.x, this.circle.center.y, this.circle.radius, this.begin_angle, this.end_angle);
 }
 Arc.prototype.intersectPoints = function(target) {
-    // TODO code intersection with lines and other circles / arcs
-    return [];
+    // Intersection between
+    mid_x = this.circle.center.x - target.circle.center.x;
+    mid_y = this.circle.center.y - target.circle.center.y;
+    d = Math.sqrt(mid_x*mid_x + mid_y*mid_y);
+    if ((d < 0.00001) || // consider 5 digits, just for approximation
+        (d > (this.circle.radius + target.circle.radius)) ||
+        (d < Math.abs(this.circle.radius - target.circle.radius))) {
+        return [];
+    }
+
+    r02 = this.circle.radius * this.circle.radius;
+    r12 = target.circle.radius * target.circle.radius;
+    a = (r02 - r12 + d*d) / (d + d);
+    h = Math.sqrt(r02 - a*a);
+
+    p2 = new Point();
+    p3_a = new Point();
+    p3_b = new Point();
+
+    a_d = a / d;
+    x_diff = target.circle.center.x - this.circle.center.x;
+    y_diff = target.circle.center.y - this.circle.center.y;
+    p2.x = this.circle.center.x + (a_d * x_diff);
+    p2.y = this.circle.center.y + (a_d * y_diff);
+
+    h_d = h / d;
+    p3_a.x = p2.x + (h_d * y_diff);
+    p3_b.x = p2.x - (h_d * y_diff);
+    p3_a.y = p2.y - (h_d * x_diff);
+    p3_b.y = p2.y + (h_d * x_diff);
+
+    return [ p3_a, p3_b ];
 }
