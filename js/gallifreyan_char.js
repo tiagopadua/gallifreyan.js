@@ -97,70 +97,122 @@ Arc.prototype.intersectPoints = function(target) {
     var name = target.name;
 
     if (name == 'Line') {
-        // Line: y = ax + b
-        // Circle: (x − p)^2 + (y − q)^2 = r^2
-        // p = this.circle.center.x
-        // q = this.circle.center.y
-        // r = this.circle.radius
-        var a = (target.end.y - target.begin.y) / (target.end.x - target.begin.x);
-        var b = target.begin.y - (a * target.begin.x);
-        var A = a*a + 1;
-        console.log("y = " + a.toString() + "x + " + b.toString());
-        var B = 2*(a*b - a*this.circle.center.y - this.circle.center.x);
-        var q2 = this.circle.center.y * this.circle.center.y;
-        var p2 = this.circle.center.x * this.circle.center.x;
-        var r2 = this.circle.radius * this.circle.radius;
-        var C = (p2 + q2 - r2 - (2*b*this.circle.center.y) + b*b);
-
-        var delta = B*B - 4*A*C;
-        if (delta < 0) {
-            return default_result;
-        }
-        var point1 = new Point();
-        var point2 = new Point();
-
-        sqrt_delta = Math.sqrt(delta);
-        point1.x = (-B + sqrt_delta) / (2*A);
-        point1.y = a*point1.x + b;
-
-        point2.x = (-B - sqrt_delta) / (2*A);
-        point2.y = a*point2.x + b;
-
-        return [ point1, point2 ];
+        return isect_line_circle(target, this.circle);
     } else if (name == 'Arc') {
-        // Intersection between circles
-        var mid_x = this.circle.center.x - target.circle.center.x;
-        var mid_y = this.circle.center.y - target.circle.center.y;
-        var d = Math.sqrt(mid_x*mid_x + mid_y*mid_y);
-        if ((d < 0.00001) || // consider 5 digits, just for approximation
-            (d > (this.circle.radius + target.circle.radius)) ||
-            (d < Math.abs(this.circle.radius - target.circle.radius))) {
-            return default_result;
-        }
-
-        var r02 = this.circle.radius * this.circle.radius;
-        var r12 = target.circle.radius * target.circle.radius;
-        var a = (r02 - r12 + d*d) / (d + d);
-        var h = Math.sqrt(r02 - a*a);
-
-        var p2 = new Point();
-        var p3_a = new Point();
-        var p3_b = new Point();
-
-        var a_d = a / d;
-        var x_diff = target.circle.center.x - this.circle.center.x;
-        var y_diff = target.circle.center.y - this.circle.center.y;
-        p2.x = this.circle.center.x + (a_d * x_diff);
-        p2.y = this.circle.center.y + (a_d * y_diff);
-
-        var h_d = h / d;
-        p3_a.x = p2.x + (h_d * y_diff);
-        p3_b.x = p2.x - (h_d * y_diff);
-        p3_a.y = p2.y - (h_d * x_diff);
-        p3_b.y = p2.y + (h_d * x_diff);
-
-        return [ p3_a, p3_b ];
+        return isect_circle_circle(this.circle, target.circle);
     }
 
     return default_result;
+}
+
+/********************************** UTIL *************************************/
+
+function bhaskara(A, B, C) {
+    var delta = B*B - 4*A*C;
+    if (delta < 0) {
+        return [];
+    }
+    sqrt_delta = Math.sqrt(delta);
+    r1 = (-B + sqrt_delta) / (2*A);
+    r2 = (-B - sqrt_delta) / (2*A);
+
+    return [ r1, r2 ];
+}
+
+/***************************** INTERSECTIONS *********************************/
+
+function isect_line_circle(line, circle) {
+    default_result = [];
+
+    // Line: y = ax + b
+    // Circle: (x − p)^2 + (y − q)^2 = r^2
+    // p = circle.center.x
+    // q = circle.center.y
+    // r = circle.radius
+
+    var point1 = new Point();
+    var point2 = new Point();
+    var A = 0;
+    var B = 0;
+    var C = 0;
+    var q2 = circle.center.y * circle.center.y;
+    var p2 = circle.center.x * circle.center.x;
+    var r2 = circle.radius * circle.radius;
+
+    // Check if it is (or almost is) a VERTICAL LINE
+    if (Math.abs(line.begin.x - line.end.x) < 0.000001) { 
+        // In vertical lines, the "a" parameter is infinite (or too big)
+        // In this case, the usual algorithm does not work
+        var x = line.begin.x;
+        A = 1;
+        B = -2 * circle.center.y;
+        C = x*x - 2*x*circle.center.x + p2 + q2 - r2;
+
+        y_points = bhaskara(A, B, C);
+        if (y_points.length != 2) {
+            return default_result;
+        }
+
+        point1.x = x;
+        point1.y = y_points[0];
+
+        point2.x = x;
+        point2.y = y_points[1];
+    } else {
+        var a = (line.end.y - line.begin.y) / (line.end.x - line.begin.x);
+        var b = line.begin.y - (a * line.begin.x);
+        A = a*a + 1;
+        B = 2*(a*b - a*circle.center.y - circle.center.x);
+        C = (p2 + q2 - r2 - (2*b*circle.center.y) + b*b);
+
+        x_points = bhaskara(A, B, C);
+        if (x_points.length != 2) {
+            return default_result;
+        }
+
+        point1.x = x_points[0];
+        point1.y = a*point1.x + b;
+
+        point2.x = x_points[1];
+        point2.y = a*point2.x + b;
+    }
+
+    return [ point1, point2 ];
+}
+
+function isect_circle_circle(circle1, circle2) {
+    default_result = [];
+
+    // Intersection between circles
+    var mid_x = circle1.center.x - circle2.center.x;
+    var mid_y = circle1.center.y - circle2.center.y;
+    var d = Math.sqrt(mid_x*mid_x + mid_y*mid_y);
+    if ((d < 0.000001) || // consider 5 digits, just for approximation
+        (d > (circle1.radius + circle2.radius)) ||
+        (d < Math.abs(circle1.radius - circle2.radius))) {
+        return default_result;
+    }
+
+    var r02 = circle1.radius * circle1.radius;
+    var r12 = circle2.radius * circle2.radius;
+    var a = (r02 - r12 + d*d) / (d + d);
+    var h = Math.sqrt(r02 - a*a);
+
+    var p2 = new Point();
+    var p3_a = new Point();
+    var p3_b = new Point();
+
+    var a_d = a / d;
+    var x_diff = circle2.center.x - circle1.center.x;
+    var y_diff = circle2.center.y - circle1.center.y;
+    p2.x = circle1.center.x + (a_d * x_diff);
+    p2.y = circle1.center.y + (a_d * y_diff);
+
+    var h_d = h / d;
+    p3_a.x = p2.x + (h_d * y_diff);
+    p3_b.x = p2.x - (h_d * y_diff);
+    p3_a.y = p2.y - (h_d * x_diff);
+    p3_b.y = p2.y + (h_d * x_diff);
+
+    return [ p3_a, p3_b ];
 }
