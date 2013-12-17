@@ -42,6 +42,21 @@ function translate(word) {
     arc.canvas = target;
     arc.line_color = "#00ffcc";
     arc.draw();
+
+    arc2 = new Arc(170, 200, 70, -2*Math.PI/3, 2*Math.PI/3);
+    arc2.canvas = target;
+    arc2.line_color = "#00ff00";
+    arc2.draw();
+
+    points = arc.intersectPoints(arc2);
+    console.log(points[0].x);
+    console.log(points[0].y);
+    console.log(points[1].x);
+    console.log(points[1].y);
+    c2 = new Line(points[0].x, points[0].y, points[1].x, points[1].y);
+    c2.canvas = target;
+    c2.line_color = "#ffffff";
+    c2.draw();
 }
 
 translate("tiago");
