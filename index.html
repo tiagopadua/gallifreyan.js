@@ -28,7 +28,7 @@ function translate(word) {
     point.line_color = "#ff0000";
     point.draw();
 
-    line = new Line(20, 10, 120, 60);
+    line = new Line(160, 0, 160, 50);
     line.canvas = target;
     line.line_color = "#ffcc00";
     line.draw();
@@ -49,10 +49,6 @@ function translate(word) {
     arc2.draw();
 
     points = arc.intersectPoints(arc2);
-    console.log(points[0].x);
-    console.log(points[0].y);
-    console.log(points[1].x);
-    console.log(points[1].y);
     c2 = new Line(points[0].x, points[0].y, points[1].x, points[1].y);
     c2.canvas = target;
     c2.line_color = "#ffffff";
