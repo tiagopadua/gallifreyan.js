@@ -1,0 +1,20 @@
+.blueprint {
+  padding: 10px;
+  background-color: #060e2a;
+  background: -webkit-gradient(linear, left bottom, right top, color-stop(0%,#060e2a), color-stop(100%,#09153b));
+  background: -webkit-linear-gradient(45deg, #060e2a 0%, #09153b 100%);
+  background:    -moz-linear-gradient(45deg, #060e2a 0%, #09153b 100%);
+  background:     -ms-linear-gradient(45deg, #060e2a 0%, #09153b 100%);
+  background:      -o-linear-gradient(45deg, #060e2a 0%, #09153b 100%);
+  background:         linear-gradient(45deg, #060e2a 0%, #09153b 100%);
+  width: 600px;
+  height: 300px;
+}
+.blueprint div {
+  width: 600px;
+  height: 300px;
+}
+#mainContainer {
+  padding-top: 20px;
+}
+
