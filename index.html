@@ -23,34 +23,34 @@ function translate(word) {
         alert("null target");
         return;
     }
-    point = new Point(10, 10);
+    point = new gallifreyan.Point(10, 10);
     point.canvas = target;
     point.line_color = "#ff0000";
     point.draw();
 
-    line = new Line(100, 0, 100, 300);
+    line = new gallifreyan.Line(100, 0, 100, 300);
     line.canvas = target;
     line.line_color = "#ffcc00";
     line.draw();
 
-    circle = new Circle(30, 100, 20);
+    circle = new gallifreyan.Circle(30, 100, 20);
     circle.canvas = target;
     circle.line_color = "#ccff00";
     circle.draw();
 
-    arc = new Arc(170, 160, 75, -Math.PI/2, Math.PI);
+    arc = new gallifreyan.Arc(170, 160, 75, -Math.PI/2, Math.PI);
     arc.canvas = target;
     arc.line_color = "#00ffcc";
     arc.draw();
 
-    arc2 = new Arc(180, 200, 70, -2*Math.PI/3, 2*Math.PI/3);
+    arc2 = new gallifreyan.Arc(180, 200, 70, -2*Math.PI/3, 2*Math.PI/3);
     arc2.canvas = target;
     arc2.line_color = "#00ff00";
     arc2.draw();
 
     points = arc.intersectPoints(arc2);
     for (p in points) {
-        p1 = new Point(points[p].x, points[p].y);
+        p1 = new gallifreyan.Point(points[p].x, points[p].y);
         p1.canvas = target;
         p1.line_color = "#ff2200";
         p1.draw();
@@ -58,7 +58,7 @@ function translate(word) {
 
     points = arc.intersectPoints(line);
     for (p in points) {
-        p1 = new Point(points[p].x, points[p].y);
+        p1 = new gallifreyan.Point(points[p].x, points[p].y);
         p1.canvas = target;
         p1.line_color = "#ff2200";
         p1.draw();
