@@ -1,6 +1,7 @@
-Math.TWOPI = 2 * Math.PI;
-
+// Organize everything in the object 'gallifreyan', and inside an anonymous function
 (function($, undefined) {
+
+    Math.TWOPI = 2 * Math.PI;
 
 /*************************** BASE DRAWING OBJECT *****************************/
     $.Graphic = function(targetCanvas) {
@@ -14,7 +15,10 @@ Math.TWOPI = 2 * Math.PI;
         ctx.strokeStyle = this.line_color;
         ctx.lineWidth = this.line_thickness;
     }
-    $.Graphic.prototype.draw = function() {
+    $.Graphic.prototype.draw = function(canvas) {
+        if (typeof canvas !== 'undefined') {
+            this.canvas = canvas;
+        }
         context = this.canvas.getContext("2d");
         context.beginPath();
         this._draw(context);
@@ -129,7 +133,15 @@ Math.TWOPI = 2 * Math.PI;
             }
             return result;
         } else if (target.name == 'Circle') {
-            return isect_circle_circle(this.circle, target);
+            isect_points = isect_circle_circle(this.circle, target);
+            result = [];
+            for (i in isect_points) {
+                point = isect_points[i];
+                if (this.containsPoint(point)) {
+                    result.push(point);
+                }
+            }
+            return result;
         } else if (target.name == 'Arc') {
             isect_points = isect_circle_circle(this.circle, target.circle);
             result = [];
@@ -153,6 +165,99 @@ Math.TWOPI = 2 * Math.PI;
             return true;
         }
         return false;
+    }
+
+/******************************* SENTENCE ************************************/
+
+    $.Sentence = function(text, left, top, size) {
+        this.text = typeof text !== 'undefined' ? text : '';
+        this.size = typeof size !== 'undefined' ? size : 300;
+        this.left = typeof left !== 'undefined' ? left : 0;
+        this.top = typeof top !== 'undefined' ? top : 0;
+        this.outside_circle = new $.Circle(left + this.size/2, top + this.size/2, this.size/2);
+        this.inside_arcs = [new $.Arc(left + this.size/2, top + this.size/2, this.size/2-5, 0, Math.TWOPI)];
+    }
+    $.Sentence.prototype.draw = function(canvas) {
+        var i = null;
+        var c = null;
+        var arc = null;
+        this.outside_circle.draw(canvas);
+        for (i in this.inside_arcs) {
+            arc = this.inside_arcs[i];
+            arc.draw(canvas);
+        }
+    }
+
+
+/********************************** WORD ************************************/
+
+    $.Word = function(text, center_x, center_y, size) {
+        this.text = typeof text !== 'undefined' ? text : '';
+        this.size = typeof size !== 'undefined' ? size : 250;
+        this.x = typeof center_x !== 'undefined' ? center_x : this.size/2;
+        this.y = typeof center_y !== 'undefined' ? center_y : this.size/2;
+        this.arcs = [new $.Arc(this.x, this.y, this.size/2, 0, Math.TWOPI)];
+    }
+    $.Word.prototype.draw = function(canvas) {
+        var i = null;
+        var c = null;
+        var arc = null;
+        for (i in this.arcs) {
+            arc = this.arcs[i];
+            arc.draw(canvas);
+        }
+    }
+
+
+
+/******************************** TEST ***************************************/
+    $.drawTest = function(canvas) {
+        point = new $.Point(10, 10);
+        point.canvas = canvas;
+        point.line_color = "#ff0000";
+        point.draw();
+
+        line = new $.Line(100, 0, 100, 250);
+        line.canvas = canvas;
+        line.line_color = "#ffcc00";
+        line.draw();
+
+        circle = new $.Circle(30, 100, 20);
+        circle.canvas = canvas;
+        circle.line_color = "#ccff00";
+        circle.draw();
+
+        arc = new $.Arc(170, 160, 75, -Math.PI/2, Math.PI);
+        arc.canvas = canvas;
+        arc.line_color = "#00ffcc";
+        arc.draw();
+
+        arc2 = new $.Arc(180, 200, 70, -2*Math.PI/3, 2*Math.PI/3);
+        arc2.canvas = canvas;
+        arc2.line_color = "#00ff00";
+        arc2.draw();
+
+        points = arc.intersectPoints(arc2);
+        for (p in points) {
+            p1 = new $.Point(points[p].x, points[p].y);
+            p1.canvas = canvas;
+            p1.line_color = "#ff2200";
+            p1.draw();
+        }
+
+        points = arc.intersectPoints(line);
+        for (p in points) {
+            p1 = new $.Point(points[p].x, points[p].y);
+            p1.canvas = canvas;
+            p1.line_color = "#ff2200";
+            p1.draw();
+        }
+
+        var s = new $.Sentence('tiago', 4, 296);
+        s.draw(canvas);
+
+        var w = new $.Word('tiago', 153, 447);
+        w.draw(canvas);
     }
 
 /********************************** UTIL *************************************/
