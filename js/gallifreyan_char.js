@@ -53,6 +53,31 @@ Line.prototype._draw = function(ctx) {
     ctx.moveTo(this.begin.x, this.begin.y);
     ctx.lineTo(this.end.x, this.end.y);
 }
+Line.prototype.boxContains = function(point) {
+    if (typeof point === 'undefined') {
+        return false;
+    }
+    var min_x = 0;
+    var max_x = 0;
+    var min_y = 0;
+    var max_y = 0;
+    if (this.begin.x < this.end.x) {
+        min_x = this.begin.x;
+        max_x = this.end.x;
+    } else {
+        min_x = this.end.x;
+        max_x = this.begin.x;
+    }
+    if (this.begin.y < this.end.y) {
+        min_y = this.begin.y;
+        max_y = this.end.y;
+    } else {
+        min_y = this.end.y;
+        max_y = this.begin.y;
+    }
+
+    return ((point.x >= min_x && point.x <= max_x) && (point.y >= min_y && point.y <= max_y));
+}
 
 /******************************* CIRCLE **************************************/
 function Circle(x, y, r) {
@@ -84,25 +109,55 @@ Arc.prototype._draw = function(ctx) {
     ctx.arc(this.circle.center.x, this.circle.center.y, this.circle.radius, this.begin_angle, this.end_angle);
 }
 Arc.prototype.intersectPoints = function(target) {
-    default_result = [];
+    var i = null;
+    var point = null;
+    var default_result = [];
 
+    // Discover the target type
     if (typeof target === 'undefined') {
         return default_result;
     }
-
-    // Discover the target type
     if (typeof target.name === 'undefined') {
         return default_result;
     }
-    var name = target.name;
 
-    if (name == 'Line') {
-        return isect_line_circle(target, this.circle);
-    } else if (name == 'Arc') {
-        return isect_circle_circle(this.circle, target.circle);
+    if (target.name == 'Line') {
+        isect_points = isect_line_circle(target, this.circle);
+        result = [];
+        for (i in isect_points) {
+            point = isect_points[i];
+            if (this.containsPoint(point) && target.boxContains(point)) {
+                result.push(point);
+            }
+        }
+        return result;
+    } else if (target.name == 'Circle') {
+        return isect_circle_circle(this.circle, target);
+    } else if (target.name == 'Arc') {
+        isect_points = isect_circle_circle(this.circle, target.circle);
+        result = [];
+        for (i in isect_points) {
+            point = isect_points[i];
+            if (this.containsPoint(point) && target.containsPoint(point)) {
+                result.push(point);
+            }
+        }
+        return result;
     }
 
     return default_result;
+}
+Arc.prototype.containsPoint = function(point) {
+    if (typeof point === 'undefined') {
+        return false;
+    }
+    angle = Math.atan2(point.y - this.circle.center.y, point.x - this.circle.center.x);
+
+    console.log(angle * 360 / Math.PI);
+    if ((angle >= this.begin_angle) && (angle <= this.end_angle)) {
+        return true;
+    }
+    return false;
 }
 
 /********************************** UTIL *************************************/
