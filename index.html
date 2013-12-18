@@ -28,7 +28,7 @@ function translate(word) {
     point.line_color = "#ff0000";
     point.draw();
 
-    line = new Line(160, 0, 160, 50);
+    line = new Line(100, 0, 100, 300);
     line.canvas = target;
     line.line_color = "#ffcc00";
     line.draw();
@@ -49,16 +49,21 @@ function translate(word) {
     arc2.draw();
 
     points = arc.intersectPoints(arc2);
-    c2 = new Line(points[0].x, points[0].y, points[1].x, points[1].y);
-    c2.canvas = target;
-    c2.line_color = "#ffffff";
-    c2.draw();
+    for (p in points) {
+        p1 = new Point(points[p].x, points[p].y);
+        p1.canvas = target;
+        p1.line_color = "#ff2200";
+        p1.draw();
+    }
 
-    pts = arc.intersectPoints(line);
-    l3 = new Line(pts[0].x, pts[0].y, pts[1].x, pts[1].y);
-    l3.canvas = target;
-    l3.line_color = "#ffffff";
-    l3.draw();
+    points = arc.intersectPoints(line);
+    for (p in points) {
+        p1 = new Point(points[p].x, points[p].y);
+        p1.canvas = target;
+        p1.line_color = "#ff2200";
+        p1.draw();
+    }
+
 }
 
 translate("tiago");
