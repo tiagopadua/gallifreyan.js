@@ -3,6 +3,7 @@
 
     Math.TWOPI = 2 * Math.PI;
 
+
 /*************************** BASE DRAWING OBJECT *****************************/
     $.Graphic = function(targetCanvas) {
         this.name = "Graphic";
@@ -25,6 +26,7 @@
         context.stroke();
     }
 
+
 /******************************* POINT ***************************************/
     $.Point = function(x, y) {
         this.name = "Point";
@@ -40,6 +42,7 @@
         var radius = this.line_thickness / 2.1;
         ctx.arc(this.x, this.y, radius, 0, Math.TWOPI);
     }
+
 
 /******************************** LINE ***************************************/
     $.Line = function(ax, ay, bx, by) {
@@ -81,6 +84,7 @@
         return ((point.x >= min_x && point.x <= max_x) && (point.y >= min_y && point.y <= max_y));
     }
 
+
 /******************************* CIRCLE **************************************/
     $.Circle = function(x, y, r) {
         this.name = "Circle";
@@ -94,6 +98,7 @@
         this._pre_draw(ctx);
         ctx.arc(this.center.x, this.center.y, this.radius, 0, Math.TWOPI);
     }
+
 
 /******************************** ARC ****************************************/
     $.Arc = function(x, y, r, begin, end) {
@@ -167,8 +172,8 @@
         return false;
     }
 
-/******************************* SENTENCE ************************************/
 
+/******************************* SENTENCE ************************************/
     $.Sentence = function(text, left, top, size) {
         this.text = typeof text !== 'undefined' ? text : '';
         this.size = typeof size !== 'undefined' ? size : 300;
@@ -176,21 +181,38 @@
         this.top = typeof top !== 'undefined' ? top : 0;
         this.outside_circle = new $.Circle(left + this.size/2, top + this.size/2, this.size/2);
         this.inside_arcs = [new $.Arc(left + this.size/2, top + this.size/2, this.size/2-5, 0, Math.TWOPI)];
+        this.setText(text);
     }
     $.Sentence.prototype.draw = function(canvas) {
         var i = null;
         var c = null;
         var arc = null;
+        var word = null;
         this.outside_circle.draw(canvas);
         for (i in this.inside_arcs) {
             arc = this.inside_arcs[i];
             arc.draw(canvas);
         }
+        for (i in this.words) {
+            word = this.words[i];
+            word.draw(canvas);
+        }
+    }
+    $.Sentence.prototype.setText = function(text) {
+        var i = null;
+        var w = null;
+        var w_object = null;
+        this.words = [];
+        word_list = text.split(' ');
+        for (i in word_list) {
+            w = word_list[i];
+            w_object = new $.Word(w);
+            this.words.push(w_object);
+        }
     }
 
 
 /********************************** WORD ************************************/
-
     $.Word = function(text, center_x, center_y, size) {
         this.text = typeof text !== 'undefined' ? text : '';
         this.size = typeof size !== 'undefined' ? size : 250;
@@ -207,7 +229,6 @@
             arc.draw(canvas);
         }
     }
-
 
 
 /******************************** TEST ***************************************/
@@ -255,13 +276,9 @@
 
         var s = new $.Sentence('tiago', 4, 296);
         s.draw(canvas);
-
-        var w = new $.Word('tiago', 153, 447);
-        w.draw(canvas);
     }
 
 /********************************** UTIL *************************************/
-
     function bhaskara(A, B, C) {
         var delta = B*B - 4*A*C;
         if (delta < 0) {
@@ -274,7 +291,6 @@
     }
 
 /***************************** INTERSECTIONS *********************************/
-
     function isect_line_circle(line, circle) {
         default_result = [];
 
