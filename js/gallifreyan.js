@@ -334,8 +334,21 @@
         outer.line_color = "#333333";
         outer.line_width = 1;
         this.draw_objects.push(outer);
-        if (this.main == 'th') {
-            var c = new $.Circle(this.x, this.y, this.radius/2);
+        if (/^([bdfgh]|ch)$/i.test(this.main)) {
+            var p = new $.Point(this.x, this.y);
+            p.line_color = "#ffff00";
+            p.line_width = 8;
+            this.draw_objects.push(p);
+        } else if (/^[jklmnp]$/i.test(this.main)) {
+            var c = new $.Circle(this.x, this.y-this.radius*.55, this.radius * .45);
+            this.draw_objects.push(c);
+        } else if (/^([trsvw]|sh)$/i.test(this.main)) {
+            var p = new $.Point(this.x, this.y);
+            p.line_color = "#00ff00";
+            p.line_width = 8;
+            this.draw_objects.push(p);
+        } else if (/^([yzx]|th|ng|qu)$/i.test(this.main)) {
+            var c = new $.Circle(this.x, this.y, this.radius * .7);
             this.draw_objects.push(c);
         } else {
             var p = new $.Point(this.x, this.y);
@@ -449,7 +462,7 @@
             p1.draw();
         }
 
-        var s = new $.Sentence('ththththt', 4, 296);
+        var s = new $.Sentence('jtbth', 4, 296);
         //var s = new $.Sentence('abajatatha chekesheye dilirizi fomosongo gunuvuquu hapawaxa', 4, 296);
         s.draw(canvas);
     }
