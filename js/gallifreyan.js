@@ -9,18 +9,23 @@
         this.name = "Graphic";
         this.canvas = typeof targetCanvas !== 'undefined' ? targetCanvas : null;
         this.line_color = "#ffffff";
-        this.line_thickness = 2;
+        this.line_width = 2;
     }
     $.Graphic.prototype._draw = function(ctx) {
         // Intended to be inherited/overwritten
         ctx.strokeStyle = this.line_color;
-        ctx.lineWidth = this.line_thickness;
+        ctx.lineWidth = this.line_width;
     }
     $.Graphic.prototype.draw = function(canvas) {
         if (typeof canvas !== 'undefined') {
             this.canvas = canvas;
         }
+        if ((typeof this.canvas === 'undefined') || (this.canvas === null)) {
+            return;
+        }
         context = this.canvas.getContext("2d");
+        //context.shadowBlur = 10;
+        //context.shadowColor = "#ffff88";
         context.beginPath();
         this._draw(context);
         context.stroke();
@@ -39,7 +44,7 @@
         // Call the "parent" class's method
         this._pre_draw(ctx);
         // Actually draw a circle with almost-zero radius
-        var radius = this.line_thickness / 2.1;
+        var radius = this.line_width / 2.1;
         ctx.arc(this.x, this.y, radius, 0, Math.TWOPI);
     }
 
@@ -179,23 +184,21 @@
         this.size = typeof size !== 'undefined' ? size : 300;
         this.left = typeof left !== 'undefined' ? left : 0;
         this.top = typeof top !== 'undefined' ? top : 0;
-        this.outside_circle = new $.Circle(left + this.size/2, top + this.size/2, this.size/2);
-        this.inside_arcs = [new $.Arc(left + this.size/2, top + this.size/2, this.size/2-5, 0, Math.TWOPI)];
+        this.center_x = this.left + this.size/2;
+        this.center_y = this.top + this.size/2;
+        this.outside_circle = new $.Circle(this.center_x, this.center_y, this.size/2);
+        this.inside_circle = new $.Circle(this.center_x, this.center_y, this.size/2-6);
+        this.words = [];
         this.setText(text);
     }
     $.Sentence.prototype.draw = function(canvas) {
         var i = null;
-        var c = null;
         var arc = null;
         var word = null;
         this.outside_circle.draw(canvas);
-        for (i in this.inside_arcs) {
-            arc = this.inside_arcs[i];
-            arc.draw(canvas);
-        }
+        this.inside_circle.draw(canvas);
         for (i in this.words) {
-            word = this.words[i];
-            word.draw(canvas);
+            this.words[i].draw(canvas);
         }
     }
     $.Sentence.prototype.setText = function(text) {
@@ -203,40 +206,208 @@
         var w = null;
         var w_object = null;
         this.words = [];
-        word_list = text.split(' ');
+        this.text = text.trim();
+
+        word_list = this.text.split(' ');
         for (i in word_list) {
             w = word_list[i];
-            w_object = new $.Word(w);
+            console.log("[[[", w, "]]]");
+            w_object = new $.Word(w, this.left + this.size/2, this.top + this.size/2);
             this.words.push(w_object);
         }
     }
 
 
-/********************************** WORD ************************************/
-    $.Word = function(text, center_x, center_y, size) {
-        this.text = typeof text !== 'undefined' ? text : '';
-        this.size = typeof size !== 'undefined' ? size : 250;
-        this.x = typeof center_x !== 'undefined' ? center_x : this.size/2;
-        this.y = typeof center_y !== 'undefined' ? center_y : this.size/2;
-        this.arcs = [new $.Arc(this.x, this.y, this.size/2, 0, Math.TWOPI)];
+/*********************************** WORD ************************************/
+    $.Word = function(text, center_x, center_y, max_diameter) {
+        this.max_diameter = typeof max_diameter !== 'undefined' ? max_diameter : 250;
+        this.radius = this.max_diameter / 2;
+        this.x = typeof center_x !== 'undefined' ? center_x : this.radius;
+        this.y = typeof center_y !== 'undefined' ? center_y : this.radius;
+        this.circle = new $.Circle(this.x, this.y, this.radius);
+        this.circle.line_color = "#333333";
+        this.circle.line_width = 1;
+        this.arcs_circle = new $.Circle(this.x, this.y, this.radius);
+        this.arcs_circle.line_color = "#333333";
+        this.arcs_circle.line_width = 1;
+        this.arcs = [new $.Arc(this.x, this.y, this.radius, 0, Math.TWOPI)];
+        this.text = "";
+        this.chars = [];
+        this.setText(text);
     }
     $.Word.prototype.draw = function(canvas) {
         var i = null;
-        var c = null;
         var arc = null;
+        this.circle.draw(canvas);
         for (i in this.arcs) {
             arc = this.arcs[i];
             arc.draw(canvas);
         }
+        for (i in this.chars) {
+            this.chars[i].draw(canvas);
+        }
+    }
+    $.Word.prototype.setText = function(text) {
+        this.text = text = text.trim().split(' ')[0];
+        this.chars = [];
+        var last_len = 0;
+        var c = null;
+        do {
+            c = new $.Char(text);
+            console.log("  ", c.main, "x", c.main_count, "  |  ", c.secondary, "x", c.secondary_count);
+            this.chars.push(c);
+            last_len = text.length;
+            text = text.substr(c.main.length*c.main_count + c.secondary.length*c.secondary_count);
+        } while ((text.length > 0) && (last_len != text.length));
+
+        this.setDimensions();
+    }
+    $.Word.prototype.setDimensions = function() {
+        if (!this.chars || this.chars.length <= 0) {
+            return;
+        }
+
+        var char_max_diameter = 20;
+        if (this.chars.length == 1) {
+            this.arcs_circle.center.y = this.y - this.radius*.3;
+            this.arcs_circle.radius = this.radius * .7;
+            this.arcs = [ new $.Arc(this.arcs_circle.center.x, this.arcs_circle.center.y, this.arcs_circle.radius, 0, Math.TWOPI) ];
+            char_max_diameter = this.max_diameter * .6;
+        } else {
+            this.arcs_circle.center.y = this.y;
+            this.arcs_circle.radius = this.radius * .6;
+            this.arcs = [ new $.Arc(this.arcs_circle.center.x, this.arcs_circle.center.y, this.arcs_circle.radius, 0, Math.TWOPI) ];
+            char_max_diameter = this.max_diameter * .4;
+        }
+
+        var i = null;
+        var current_angle = Math.PI / 2; // Start on the bottom
+        var angle_increment = -Math.TWOPI / this.chars.length; // Then go counter-clockwise
+        for (i in this.chars) {
+            var c = this.chars[i];
+            c.x = this.arcs_circle.center.x + this.arcs_circle.radius * Math.cos(current_angle);
+            c.y = this.arcs_circle.center.y + this.arcs_circle.radius * Math.sin(current_angle);
+            c.setMaxDiameter(char_max_diameter);
+            current_angle += angle_increment;
+        }
+    }
+
+
+
+/*********************************** CHAR ************************************/
+// This can be a single character, repeated "n" times and/or followed by
+// a vowel (which could also be repeated "n" times)
+    $.Char = function(text, center_x, center_y, max_diameter) {
+        this.setMaxDiameter(max_diameter);
+        this.x = typeof center_x !== 'undefined' ? center_x : this.radius;
+        this.y = typeof center_y !== 'undefined' ? center_y : this.radius;
+        this.draw_objects = [];
+        this.main = "";
+        this.main_count = 0;
+        this.secondary = "";
+        this.secondary_count = 0;
+        this.text = "";
+        this.getFirstChar(text);
+    }
+    $.Char.prototype.setMaxDiameter = function(max_diameter) {
+        this.max_diameter = typeof max_diameter !== 'undefined' ? max_diameter : 50;
+        this.radius = this.max_diameter / 2;
+    }
+    $.Char.prototype.draw = function(canvas) {
+        this.loadObjects();
+        var i = null;
+        for (i in this.draw_objects) {
+            this.draw_objects[i].draw(canvas);
+        }
+    }
+    $.Char.prototype.loadObjects = function() {
+        this.draw_objects = [];
+        // Primary
+        if (!this.main || this.main.length <= 0 || this.main_count <= 0) {
+            return;
+        }
+        var outer = new $.Circle(this.x, this.y, this.max_diameter/2);
+        outer.line_color = "#333333";
+        outer.line_width = 1;
+        this.draw_objects.push(outer);
+        if (this.main == 'th') {
+            var c = new $.Circle(this.x, this.y, this.radius/2);
+            this.draw_objects.push(c);
+        } else {
+            var p = new $.Point(this.x, this.y);
+            p.line_color = "#ff0000";
+            p.line_width = 8;
+            this.draw_objects.push(p);
+        }
+
+        // Secondary
+        if (!this.secondary || this.secondary.length <= 0 || this.secondary_count <= 0) {
+            return;
+        }
+    }
+    $.Char.prototype.getFirstChar = function(text) {
+        this.main = "";
+        this.main_count = 0;
+        this.secondary = "";
+        this.secondary_count = 0;
+        if (text == null || text.length <= 0) {
+            return;
+        }
+
+        var vowels = /^[aeiou]/i;
+        var single_consonants = /^[bcdfghjklmnprstvwxyz]/i;
+        var double_consonants = /^(th|ch|sh|ng|qu)/i;
+        var c = text[0];
+        if (vowels.test(c)) {
+            this.main = c;
+            this.main_count = this.countCharRepeat(text);
+        } else {
+            var d = text.substr(0,2);
+            if (double_consonants.test(d)) {
+                this.main = d;
+                this.main_count = 1;
+            } else if (single_consonants.test(c)) {
+                this.main = c;
+                this.main_count = this.countCharRepeat(text);
+            }
+
+            var vowel_index = this.main.length * this.main_count;
+            if (text.length > vowel_index) {
+                c = text[vowel_index]; // get secondary char if there is one
+                if (vowels.test(c)) {
+                    this.secondary = c;
+                    this.secondary_count = this.countCharRepeat(text, vowel_index);
+                }
+            }
+        }
+    }
+    $.Char.prototype.countCharRepeat = function(text, start_index) {
+        start_index = typeof start_index !== 'undefined' ? start_index : 0;
+        var i = 0;
+        var count = 0;
+        var c = null;
+        if (start_index >= text.length) {
+            return 0;
+        }
+        for (i=start_index; i<text.length; i++) {
+            if (i == start_index) {
+                c = text[i];
+                count = 1;
+            } else if (c == text[i]) {
+                count += 1;
+            } else {
+                break;
+            }
+        }
+        return count;
     }
 
 
 /******************************** TEST ***************************************/
     $.drawTest = function(canvas) {
         point = new $.Point(10, 10);
-        point.canvas = canvas;
         point.line_color = "#ff0000";
-        point.draw();
+        point.draw(canvas);
 
         line = new $.Line(100, 0, 100, 250);
         line.canvas = canvas;
@@ -274,21 +445,29 @@
             p1.draw();
         }
 
-        var s = new $.Sentence('tiago', 4, 296);
+        var s = new $.Sentence('thththt', 4, 296);
+        //var s = new $.Sentence('abajatatha chekesheye dilirizi fomosongo gunuvuquu hapawaxa', 4, 296);
         s.draw(canvas);
     }
 
 /********************************** UTIL *************************************/
     function bhaskara(A, B, C) {
-        var delta = B*B - 4*A*C;
-        if (delta < 0) {
-            return [];
+        // If A=0, then it is NOT a second degree polynomial
+        if (A != 0) {
+            var delta = B*B - 4*A*C;
+            if (delta < 0) {
+                return [];
+            }
+            sqrt_delta = Math.sqrt(delta);
+            r1 = (-B + sqrt_delta) / (2*A);
+            r2 = (-B - sqrt_delta) / (2*A);
+            return [ r1, r2 ];
+        } else if (B != 0) {
+            return [ -C / B ]
         }
-        sqrt_delta = Math.sqrt(delta);
-        r1 = (-B + sqrt_delta) / (2*A);
-        r2 = (-B - sqrt_delta) / (2*A);
-        return [ r1, r2 ];
+        return [];
     }
+
 
 /***************************** INTERSECTIONS *********************************/
     function isect_line_circle(line, circle) {
@@ -318,7 +497,7 @@
             B = -2 * circle.center.y;
             C = x*x - 2*x*circle.center.x + p2 + q2 - r2;
 
-            y_points = bhaskara(A, B, C);
+            var y_points = bhaskara(A, B, C);
             if (y_points.length != 2) {
                 return default_result;
             }
@@ -335,7 +514,7 @@
             B = 2*(a*b - a*circle.center.y - circle.center.x);
             C = (p2 + q2 - r2 - (2*b*circle.center.y) + b*b);
 
-            x_points = bhaskara(A, B, C);
+            var x_points = bhaskara(A, B, C);
             if (x_points.length != 2) {
                 return default_result;
             }
