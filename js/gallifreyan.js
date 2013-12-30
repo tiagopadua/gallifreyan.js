@@ -275,9 +275,13 @@
             char_max_diameter = this.max_diameter * .6;
         } else {
             this.arcs_circle.center.y = this.y;
-            this.arcs_circle.radius = this.radius * .6;
+
+            var alpha = (Math.TWOPI / this.chars.length) / 2;
+            var sin_alpha = Math.sin(alpha);
+
+            char_max_diameter = 2 * this.radius * sin_alpha / (sin_alpha + 1);
+            this.arcs_circle.radius = this.radius - (char_max_diameter / 2);
             this.arcs = [ new $.Arc(this.arcs_circle.center.x, this.arcs_circle.center.y, this.arcs_circle.radius, 0, Math.TWOPI) ];
-            char_max_diameter = this.max_diameter * .4;
         }
 
         var i = null;
@@ -445,7 +449,7 @@
             p1.draw();
         }
 
-        var s = new $.Sentence('thththt', 4, 296);
+        var s = new $.Sentence('ththththt', 4, 296);
         //var s = new $.Sentence('abajatatha chekesheye dilirizi fomosongo gunuvuquu hapawaxa', 4, 296);
         s.draw(canvas);
     }
