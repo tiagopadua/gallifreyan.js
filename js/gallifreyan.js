@@ -289,6 +289,7 @@
         var angle_increment = -Math.TWOPI / this.chars.length; // Then go counter-clockwise
         for (i in this.chars) {
             var c = this.chars[i];
+            c.owner_circle = this.arcs_circle;
             c.x = this.arcs_circle.center.x + this.arcs_circle.radius * Math.cos(current_angle);
             c.y = this.arcs_circle.center.y + this.arcs_circle.radius * Math.sin(current_angle);
             c.setMaxDiameter(char_max_diameter);
@@ -297,14 +298,15 @@
     }
 
 
-
 /*********************************** CHAR ************************************/
 // This can be a single character, repeated "n" times and/or followed by
 // a vowel (which could also be repeated "n" times)
-    $.Char = function(text, center_x, center_y, max_diameter) {
+    $.Char = function(text, center_x, center_y, max_diameter, owner_circle) {
         this.setMaxDiameter(max_diameter);
         this.x = typeof center_x !== 'undefined' ? center_x : this.radius;
         this.y = typeof center_y !== 'undefined' ? center_y : this.radius;
+        this.owner_circle = typeof owner_circle !== 'undefined' ? owner_circle : null;
+        this.owner_intersect_points = [];
         this.draw_objects = [];
         this.main = "";
         this.main_count = 0;
@@ -335,32 +337,79 @@
         outer.line_width = 1;
         this.draw_objects.push(outer);
         if (/^([bdfgh]|ch)$/i.test(this.main)) {
-            var p = new $.Point(this.x, this.y);
-            p.line_color = "#ffff00";
-            p.line_width = 8;
-            this.draw_objects.push(p);
+            var modifier = null;
+            if (this.main == 'ch') { modifier = '2dots'; }
+            else if (this.main == 'd') { modifier = '3dots'; }
+            else if (this.main == 'f') { modifier = '3stripes'; }
+            else if (this.main == 'g') { modifier = '1stripe'; }
+            else if (this.main == 'h') { modifier = '2stripes'; }
+            this.loadB(modifier);
         } else if (/^[jklmnp]$/i.test(this.main)) {
-            var c = new $.Circle(this.x, this.y-this.radius*.55, this.radius * .45);
-            this.draw_objects.push(c);
+            var modifier = null;
+            if (this.main == 'k') { modifier = '2dots'; }
+            else if (this.main == 'l') { modifier = '3dots'; }
+            else if (this.main == 'm') { modifier = '3stripes'; }
+            else if (this.main == 'n') { modifier = '1stripe'; }
+            else if (this.main == 'p') { modifier = '2stripes'; }
+            this.loadJ(modifier);
         } else if (/^([trsvw]|sh)$/i.test(this.main)) {
-            var p = new $.Point(this.x, this.y);
-            p.line_color = "#00ff00";
-            p.line_width = 8;
-            this.draw_objects.push(p);
+            var modifier = null;
+            if (this.main == 'sh') { modifier = '2dots'; }
+            else if (this.main == 'r') { modifier = '3dots'; }
+            else if (this.main == 's') { modifier = '3stripes'; }
+            else if (this.main == 'v') { modifier = '1stripe'; }
+            else if (this.main == 'w') { modifier = '2stripes'; }
+            this.loadT(modifier);
         } else if (/^([yzx]|th|ng|qu)$/i.test(this.main)) {
-            var c = new $.Circle(this.x, this.y, this.radius * .7);
-            this.draw_objects.push(c);
+            var modifier = null;
+            if (this.main == 'y') { modifier = '2dots'; }
+            else if (this.main == 'z') { modifier = '3dots'; }
+            else if (this.main == 'ng') { modifier = '3stripes'; }
+            else if (this.main == 'qu') { modifier = '1stripe'; }
+            else if (this.main == 'x') { modifier = '2stripes'; }
+            this.loadTH(modifier);
+        } else if (/^[aeiou]$/i.test(this.main)) {
+            this.loadVowel();
         } else {
-            var p = new $.Point(this.x, this.y);
-            p.line_color = "#ff0000";
-            p.line_width = 8;
-            this.draw_objects.push(p);
+            this.loadOther();
         }
 
         // Secondary
         if (!this.secondary || this.secondary.length <= 0 || this.secondary_count <= 0) {
             return;
         }
+    }
+    $.Char.prototype.loadB = function(modifier) {
+        var p = new $.Point(this.x, this.y);
+        p.line_color = "#ffff00";
+        p.line_width = 8;
+        this.draw_objects.push(p);
+    }
+    $.Char.prototype.loadJ = function(modifier) {
+        var c = new $.Circle(this.x, this.y-this.radius*.55, this.radius * .45);
+        this.draw_objects.push(c);
+    }
+    $.Char.prototype.loadT = function(modifier) {
+        var p = new $.Point(this.x, this.y);
+        p.line_color = "#00ff00";
+        p.line_width = 8;
+        this.draw_objects.push(p);
+    }
+    $.Char.prototype.loadTH = function(modifier) {
+        var c = new $.Circle(this.x, this.y, this.radius * .7);
+        this.draw_objects.push(c);
+    }
+    $.Char.prototype.loadVowel = function() {
+        var p = new $.Point(this.x, this.y);
+        p.line_color = "#00ffff";
+        p.line_width = 8;
+        this.draw_objects.push(p);
+    }
+    $.Char.prototype.loadOther = function() {
+        var p = new $.Point(this.x, this.y);
+        p.line_color = "#ff0000";
+        p.line_width = 8;
+        this.draw_objects.push(p);
     }
     $.Char.prototype.getFirstChar = function(text) {
         this.main = "";
@@ -462,7 +511,7 @@
             p1.draw();
         }
 
-        var s = new $.Sentence('jtbth', 4, 296);
+        var s = new $.Sentence('ajtbth', 4, 296);
         //var s = new $.Sentence('abajatatha chekesheye dilirizi fomosongo gunuvuquu hapawaxa', 4, 296);
         s.draw(canvas);
     }
