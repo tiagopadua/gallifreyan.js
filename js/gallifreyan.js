@@ -322,6 +322,8 @@
     $.Char.prototype.setMaxDiameter = function(max_diameter) {
         this.max_diameter = typeof max_diameter !== 'undefined' ? max_diameter : 50;
         this.radius = this.max_diameter / 2;
+        this.consonant_radius = this.radius * .45; // 90% of the max radius = the diameter of the consonant radius
+        this.vowel_radius = this.consonant_radius * .2; // 20%
         this.max_circle = new $.Circle(this.x, this.y, this.max_diameter/2);
         this.max_circle.line_color = $.guideline_color;
         this.max_circle.line_width = 1;
