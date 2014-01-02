@@ -103,6 +103,22 @@
         this._pre_draw(ctx);
         ctx.arc(this.center.x, this.center.y, this.radius, 0, Math.TWOPI);
     }
+    $.Circle.prototype.intersectPoints = function(target) {
+        var default_result = [];
+
+        // Discover the target type
+        if (typeof target === 'undefined' || target == null) {
+            return default_result;
+        }
+        if (typeof target.name === 'undefined' || target.name == null) {
+            return default_result;
+        }
+
+        if (target.name == 'Circle') {
+            return isect_circle_circle(this, target);
+        }
+        return default_result;
+    }
 
 
 /******************************** ARC ****************************************/
@@ -398,6 +414,20 @@
     $.Char.prototype.loadTH = function(modifier) {
         var c = new $.Circle(this.x, this.y, this.radius * .7);
         this.draw_objects.push(c);
+
+        this.owner_intersect_points = c.intersectPoints(this.owner_circle);
+        console.log(this.owner_intersect_points);
+        var owner_center = this.owner_circle.center; // this lets the variable on the same context as the sort anonymous function
+        this.owner_intersect_points.sort(function(a, b) {
+            var vector_a_x = a.x - owner_center.x;
+            var vector_a_y = a.y - owner_center.y;
+            var vector_b_x = b.x - owner_center.x;
+            var vector_b_y = b.y - owner_center.y;
+            a.angle = Math.atan2(vector_a_y, vector_a_x);
+            b.angle = Math.atan2(vector_b_y, vector_b_x);
+            return (a.angle < b.angle);
+        });
+        console.log(this.owner_intersect_points);
     }
     $.Char.prototype.loadVowel = function() {
         var p = new $.Point(this.x, this.y);
@@ -511,7 +541,7 @@
             p1.draw();
         }
 
-        var s = new $.Sentence('ajtbth', 4, 296);
+        var s = new $.Sentence('thth', 4, 296);
         //var s = new $.Sentence('abajatatha chekesheye dilirizi fomosongo gunuvuquu hapawaxa', 4, 296);
         s.draw(canvas);
     }
