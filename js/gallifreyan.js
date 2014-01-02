@@ -3,6 +3,9 @@
 
     Math.TWOPI = 2 * Math.PI;
 
+    $.draw_guidelines = true;
+    $.guideline_color = "#333333";
+
 
 /*************************** BASE DRAWING OBJECT *****************************/
     $.Graphic = function(targetCanvas) {
@@ -211,7 +214,7 @@
         word_list = this.text.split(' ');
         for (i in word_list) {
             w = word_list[i];
-            console.log("[[[", w, "]]]");
+            //console.log("[[[", w, "]]]");
             w_object = new $.Word(w, this.left + this.size/2, this.top + this.size/2);
             this.words.push(w_object);
         }
@@ -225,10 +228,10 @@
         this.x = typeof center_x !== 'undefined' ? center_x : this.radius;
         this.y = typeof center_y !== 'undefined' ? center_y : this.radius;
         this.circle = new $.Circle(this.x, this.y, this.radius);
-        this.circle.line_color = "#333333";
+        this.circle.line_color = $.guideline_color;
         this.circle.line_width = 1;
         this.arcs_circle = new $.Circle(this.x, this.y, this.radius);
-        this.arcs_circle.line_color = "#333333";
+        this.arcs_circle.line_color = $.guideline_color;
         this.arcs_circle.line_width = 1;
         this.arcs = [new $.Arc(this.x, this.y, this.radius, 0, Math.TWOPI)];
         this.text = "";
@@ -238,13 +241,15 @@
     $.Word.prototype.draw = function(canvas) {
         var i = null;
         var arc = null;
-        this.circle.draw(canvas);
         for (i in this.arcs) {
             arc = this.arcs[i];
             arc.draw(canvas);
         }
         for (i in this.chars) {
             this.chars[i].draw(canvas);
+        }
+        if ($.draw_guidelines) {
+            this.circle.draw(canvas);
         }
     }
     $.Word.prototype.setText = function(text) {
@@ -305,6 +310,7 @@
         this.setMaxDiameter(max_diameter);
         this.x = typeof center_x !== 'undefined' ? center_x : this.radius;
         this.y = typeof center_y !== 'undefined' ? center_y : this.radius;
+        this.max_circle = null;
         this.draw_objects = [];
         this.main = "";
         this.main_count = 0;
@@ -316,12 +322,18 @@
     $.Char.prototype.setMaxDiameter = function(max_diameter) {
         this.max_diameter = typeof max_diameter !== 'undefined' ? max_diameter : 50;
         this.radius = this.max_diameter / 2;
+        this.max_circle = new $.Circle(this.x, this.y, this.max_diameter/2);
+        this.max_circle.line_color = $.guideline_color;
+        this.max_circle.line_width = 1;
     }
     $.Char.prototype.draw = function(canvas) {
         this.loadObjects();
         var i = null;
         for (i in this.draw_objects) {
             this.draw_objects[i].draw(canvas);
+        }
+        if ($.draw_guidelines && this.max_circle) {
+            this.max_circle.draw(canvas);
         }
     }
     $.Char.prototype.loadObjects = function() {
@@ -330,10 +342,6 @@
         if (!this.main || this.main.length <= 0 || this.main_count <= 0) {
             return;
         }
-        var outer = new $.Circle(this.x, this.y, this.max_diameter/2);
-        outer.line_color = "#333333";
-        outer.line_width = 1;
-        this.draw_objects.push(outer);
         if (/^([bdfgh]|ch)$/i.test(this.main)) {
             var p = new $.Point(this.x, this.y);
             p.line_color = "#ffff00";
