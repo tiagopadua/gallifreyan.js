@@ -47,7 +47,7 @@
         // Call the "parent" class's method
         this._pre_draw(ctx);
         // Actually draw a circle with almost-zero radius
-        var radius = this.line_width / 2.1;
+        var radius = this.line_width / 2.01;
         ctx.arc(this.x, this.y, radius, 0, Math.TWOPI);
     }
 
@@ -360,12 +360,13 @@
 /*********************************** CHAR ************************************/
 // This can be a single character, repeated "n" times and/or followed by
 // a vowel (which could also be repeated "n" times)
-    $.Char = function(text, center_x, center_y, max_diameter) {
+    $.Char = function(text, center_x, center_y, max_diameter, up_vector) {
         this.draw_objects = [];
         this.max_circle = null;
         this.owner_intersect_object = null;
         this.x = typeof center_x !== 'undefined' ? center_x : this.radius;
         this.y = typeof center_y !== 'undefined' ? center_y : this.radius;
+        this.up_vector = typeof up_vector !== 'undefined' ? up_vector : new $.Point(0, -1);
         this.main = "";
         this.main_count = 0;
         this.secondary = "";
@@ -376,11 +377,11 @@
     }
     $.Char.prototype.setX = function(new_x) {
         this.x = typeof new_x !== 'undefined' ? new_x : this.radius;
-        //this.loadObjects();
+        this.loadObjects();
     }
     $.Char.prototype.setY = function(new_y) {
         this.y = typeof new_y !== 'undefined' ? new_y : this.radius;
-        //this.loadObjects();
+        this.loadObjects();
     }
     $.Char.prototype.setMaxDiameter = function(max_diameter) {
         this.max_diameter = typeof max_diameter !== 'undefined' ? max_diameter : 50;
@@ -398,7 +399,6 @@
         this.loadObjects();
     }
     $.Char.prototype.draw = function(canvas) {
-        //this.loadObjects();
         var i = null;
         for (i in this.draw_objects) {
             this.draw_objects[i].draw(canvas);
@@ -552,47 +552,7 @@
 
 /******************************** TEST ***************************************/
     $.drawTest = function(canvas) {
-        point = new $.Point(10, 10);
-        point.line_color = "#ff0000";
-        point.draw(canvas);
-
-        line = new $.Line(100, 0, 100, 250);
-        line.canvas = canvas;
-        line.line_color = "#ffcc00";
-        line.draw();
-
-        circle = new $.Circle(30, 100, 20);
-        circle.canvas = canvas;
-        circle.line_color = "#ccff00";
-        circle.draw();
-
-        arc = new $.Arc(170, 160, 75, -Math.PI/2, Math.PI);
-        arc.canvas = canvas;
-        arc.line_color = "#00ffcc";
-        arc.draw();
-
-        arc2 = new $.Arc(180, 200, 70, -2*Math.PI/3, 2*Math.PI/3);
-        arc2.canvas = canvas;
-        arc2.line_color = "#00ff00";
-        arc2.draw();
-
-        points = arc.intersectPoints(arc2);
-        for (p in points) {
-            p1 = new $.Point(points[p].x, points[p].y);
-            p1.canvas = canvas;
-            p1.line_color = "#ff2200";
-            p1.draw();
-        }
-
-        points = arc.intersectPoints(line);
-        for (p in points) {
-            p1 = new $.Point(points[p].x, points[p].y);
-            p1.canvas = canvas;
-            p1.line_color = "#ff2200";
-            p1.draw();
-        }
-
-        var s = new $.Sentence('ththth', 4, 296);
+        var s = new $.Sentence('ththth', 100, 100);
         //var s = new $.Sentence('abajatatha chekesheye dilirizi fomosongo gunuvuquu hapawaxa', 4, 296);
         s.draw(canvas);
     }
