@@ -467,15 +467,14 @@
         this.draw_objects.push(c);
     }
     $.Char.prototype.loadT = function(modifier) {
-        var p = new $.Point(this.x, this.y);
-        p.line_color = "#00ff00";
-        p.line_width = 8;
-        this.draw_objects.push(p);
+        var c = new $.Arc(this.x, this.y, this.consonant_radius, 0, Math.PI);
+        this.draw_objects.push(c);
+        this.owner_intersect_object = c.circle;
     }
     $.Char.prototype.loadTH = function(modifier) {
         var c = new $.Circle(this.x, this.y, this.consonant_radius);
         this.draw_objects.push(c);
-        this.owner_intersect_object = c;
+        //this.owner_intersect_object = c;
     }
     $.Char.prototype.loadVowel = function() {
         var p = new $.Point(this.x, this.y);
@@ -549,53 +548,6 @@
         return count;
     }
 
-
-/******************************** TEST ***************************************/
-    $.drawTest = function(canvas) {
-        point = new $.Point(10, 10);
-        point.line_color = "#ff0000";
-        point.draw(canvas);
-
-        line = new $.Line(100, 0, 100, 250);
-        line.canvas = canvas;
-        line.line_color = "#ffcc00";
-        line.draw();
-
-        circle = new $.Circle(30, 100, 20);
-        circle.canvas = canvas;
-        circle.line_color = "#ccff00";
-        circle.draw();
-
-        arc = new $.Arc(170, 160, 75, -Math.PI/2, Math.PI);
-        arc.canvas = canvas;
-        arc.line_color = "#00ffcc";
-        arc.draw();
-
-        arc2 = new $.Arc(180, 200, 70, -2*Math.PI/3, 2*Math.PI/3);
-        arc2.canvas = canvas;
-        arc2.line_color = "#00ff00";
-        arc2.draw();
-
-        points = arc.intersectPoints(arc2);
-        for (p in points) {
-            p1 = new $.Point(points[p].x, points[p].y);
-            p1.canvas = canvas;
-            p1.line_color = "#ff2200";
-            p1.draw();
-        }
-
-        points = arc.intersectPoints(line);
-        for (p in points) {
-            p1 = new $.Point(points[p].x, points[p].y);
-            p1.canvas = canvas;
-            p1.line_color = "#ff2200";
-            p1.draw();
-        }
-
-        var s = new $.Sentence('ththth', 4, 296);
-        //var s = new $.Sentence('abajatatha chekesheye dilirizi fomosongo gunuvuquu hapawaxa', 4, 296);
-        s.draw(canvas);
-    }
 
 /********************************** UTIL *************************************/
     function bhaskara(A, B, C) {
@@ -716,5 +668,54 @@
 
         return [ p3_a, p3_b ];
     }
+
+    
+/******************************** TEST ***************************************/
+    $.drawTest = function(canvas) {
+        /*point = new $.Point(10, 10);
+        point.line_color = "#ff0000";
+        point.draw(canvas);
+
+        line = new $.Line(100, 0, 100, 250);
+        line.canvas = canvas;
+        line.line_color = "#ffcc00";
+        line.draw();
+
+        circle = new $.Circle(30, 100, 20);
+        circle.canvas = canvas;
+        circle.line_color = "#ccff00";
+        circle.draw();
+
+        arc = new $.Arc(170, 160, 75, -Math.PI/2, Math.PI);
+        arc.canvas = canvas;
+        arc.line_color = "#00ffcc";
+        arc.draw();
+
+        arc2 = new $.Arc(180, 200, 70, -2*Math.PI/3, 2*Math.PI/3);
+        arc2.canvas = canvas;
+        arc2.line_color = "#00ff00";
+        arc2.draw();
+
+        points = arc.intersectPoints(arc2);
+        for (p in points) {
+            p1 = new $.Point(points[p].x, points[p].y);
+            p1.canvas = canvas;
+            p1.line_color = "#ff2200";
+            p1.draw();
+        }
+
+        points = arc.intersectPoints(line);
+        for (p in points) {
+            p1 = new $.Point(points[p].x, points[p].y);
+            p1.canvas = canvas;
+            p1.line_color = "#ff2200";
+            p1.draw();
+        }*/
+
+        var s = new $.Sentence('ththt', 100, 100);
+        //var s = new $.Sentence('abajatatha chekesheye dilirizi fomosongo gunuvuquu hapawaxa', 4, 296);
+        s.draw(canvas);
+    }
+
 
 }(window.gallifreyan = window.gallifreyan || {}));
