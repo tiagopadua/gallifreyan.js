@@ -230,7 +230,6 @@
         word_list = this.text.split(' ');
         for (i in word_list) {
             w = word_list[i];
-            //console.log("[[[", w, "]]]");
             w_object = new $.Word(w, this.left + this.size/2, this.top + this.size/2);
             this.words.push(w_object);
         }
@@ -288,11 +287,11 @@
             return;
         }
 
+        // Split homogeneously the word circle, to fit exactly all char circles
         var char_max_diameter = 20;
         if (this.chars.length == 1) {
             this.arcs_circle.center.y = this.y - this.radius*.3;
             this.arcs_circle.radius = this.radius * .7;
-            this.arcs = [ new $.Arc(this.arcs_circle.center.x, this.arcs_circle.center.y, this.arcs_circle.radius, 0, Math.TWOPI) ];
             char_max_diameter = this.max_diameter * .6;
         } else {
             this.arcs_circle.center.y = this.y;
@@ -302,52 +301,104 @@
 
             char_max_diameter = 2 * this.radius * sin_alpha / (sin_alpha + 1);
             this.arcs_circle.radius = this.radius - (char_max_diameter / 2);
-            this.arcs = [ new $.Arc(this.arcs_circle.center.x, this.arcs_circle.center.y, this.arcs_circle.radius, 0, Math.TWOPI) ];
         }
 
+        // Position the char
         var i = null;
+        var j = null;
         var current_angle = Math.PI / 2; // Start on the bottom
         var angle_increment = -Math.TWOPI / this.chars.length; // Then go counter-clockwise
+        var arcs_angles = [];
         for (i in this.chars) {
             var c = this.chars[i];
-            c.owner_circle = this.arcs_circle;
-            c.x = this.arcs_circle.center.x + this.arcs_circle.radius * Math.cos(current_angle);
-            c.y = this.arcs_circle.center.y + this.arcs_circle.radius * Math.sin(current_angle);
+            c.setX(this.arcs_circle.center.x + this.arcs_circle.radius * Math.cos(current_angle));
+            c.setY(this.arcs_circle.center.y + this.arcs_circle.radius * Math.sin(current_angle));
             c.setMaxDiameter(char_max_diameter);
             current_angle += angle_increment;
+            var isect_points = c.ownerIntersect(this.arcs_circle);
+            for (j in isect_points) {
+                var p = isect_points[j];
+                var a = Math.atan2(p.y - this.arcs_circle.center.y, p.x - this.arcs_circle.center.x);
+                if (a > Math.PI) {
+                    do {
+                        a -= Math.TWOPI;
+                    } while (a > Math.PI);
+                } else if (a < -Math.PI) {
+                    do {
+                        a += Math.TWOPI;
+                    } while (a < -Math.PI);
+                }
+                arcs_angles.push(a);
+            }
         }
+
+        // Order the arcs angles
+        console.log(arcs_angles);
+        arcs_angles.sort(function(a,b) {
+            return a-b;
+        });
+        console.log(arcs_angles);
+        // Add the angles to the list
+        if (arcs_angles.length > 0) {
+            // TODO: needs to process chars which envolves the PI
+            this.arcs = [];
+            for (i=1; i<arcs_angles.length-1; i+=2) {
+                this.addArc(arcs_angles[i], arcs_angles[i+1]);
+            }
+            if (arcs_angles.length >= 2) {
+                this.addArc(arcs_angles[arcs_angles.length-1], arcs_angles[0]);
+            }
+        } else {
+            this.arcs = [ new $.Arc(this.arcs_circle.center.x, this.arcs_circle.center.y, this.arcs_circle.radius, 0, Math.TWOPI) ];
+        }
+    }
+    $.Word.prototype.addArc = function(begin_angle, end_angle) {
+        this.arcs.push(new $.Arc(this.arcs_circle.center.x, this.arcs_circle.center.y, this.arcs_circle.radius, begin_angle, end_angle));
     }
 
 
 /*********************************** CHAR ************************************/
 // This can be a single character, repeated "n" times and/or followed by
 // a vowel (which could also be repeated "n" times)
-    $.Char = function(text, center_x, center_y, max_diameter, owner_circle) {
-        this.setMaxDiameter(max_diameter);
+    $.Char = function(text, center_x, center_y, max_diameter) {
+        this.draw_objects = [];
+        this.max_circle = null;
+        this.owner_intersect_object = null;
         this.x = typeof center_x !== 'undefined' ? center_x : this.radius;
         this.y = typeof center_y !== 'undefined' ? center_y : this.radius;
-        this.owner_circle = typeof owner_circle !== 'undefined' ? owner_circle : null;
-        this.owner_intersect_points = [];
-        this.max_circle = null;
-        this.draw_objects = [];
         this.main = "";
         this.main_count = 0;
         this.secondary = "";
         this.secondary_count = 0;
         this.text = "";
         this.getFirstChar(text);
+        this.setMaxDiameter(max_diameter);
+    }
+    $.Char.prototype.setX = function(new_x) {
+        this.x = typeof new_x !== 'undefined' ? new_x : this.radius;
+        //this.loadObjects();
+    }
+    $.Char.prototype.setY = function(new_y) {
+        this.y = typeof new_y !== 'undefined' ? new_y : this.radius;
+        //this.loadObjects();
     }
     $.Char.prototype.setMaxDiameter = function(max_diameter) {
         this.max_diameter = typeof max_diameter !== 'undefined' ? max_diameter : 50;
         this.radius = this.max_diameter / 2;
-        this.consonant_radius = this.radius * .45; // 90% of the max radius = the diameter of the consonant radius
+        this.consonant_radius = this.radius * .45; // 90% of the max radius = the diameter of the consonant circle
         this.vowel_radius = this.consonant_radius * .2; // 20%
-        this.max_circle = new $.Circle(this.x, this.y, this.max_diameter/2);
+        if (!this.max_circle) {
+            this.max_circle = new $.Circle();
+        }
+        this.max_circle.center.x = this.x;
+        this.max_circle.center.y = this.y;
+        this.max_circle.radius = this.max_diameter/2;
         this.max_circle.line_color = $.guideline_color;
         this.max_circle.line_width = 1;
+        this.loadObjects();
     }
     $.Char.prototype.draw = function(canvas) {
-        this.loadObjects();
+        //this.loadObjects();
         var i = null;
         for (i in this.draw_objects) {
             this.draw_objects[i].draw(canvas);
@@ -412,7 +463,7 @@
         this.draw_objects.push(p);
     }
     $.Char.prototype.loadJ = function(modifier) {
-        var c = new $.Circle(this.x, this.y-this.radius*.55, this.radius * .45);
+        var c = new $.Circle(this.x, this.y-this.radius*.55, this.consonant_radius);
         this.draw_objects.push(c);
     }
     $.Char.prototype.loadT = function(modifier) {
@@ -422,22 +473,9 @@
         this.draw_objects.push(p);
     }
     $.Char.prototype.loadTH = function(modifier) {
-        var c = new $.Circle(this.x, this.y, this.radius * .7);
+        var c = new $.Circle(this.x, this.y, this.consonant_radius);
         this.draw_objects.push(c);
-
-        this.owner_intersect_points = c.intersectPoints(this.owner_circle);
-        console.log(this.owner_intersect_points);
-        var owner_center = this.owner_circle.center; // this lets the variable on the same context as the sort anonymous function
-        this.owner_intersect_points.sort(function(a, b) {
-            var vector_a_x = a.x - owner_center.x;
-            var vector_a_y = a.y - owner_center.y;
-            var vector_b_x = b.x - owner_center.x;
-            var vector_b_y = b.y - owner_center.y;
-            a.angle = Math.atan2(vector_a_y, vector_a_x);
-            b.angle = Math.atan2(vector_b_y, vector_b_x);
-            return (a.angle < b.angle);
-        });
-        console.log(this.owner_intersect_points);
+        this.owner_intersect_object = c;
     }
     $.Char.prototype.loadVowel = function() {
         var p = new $.Point(this.x, this.y);
@@ -450,6 +488,9 @@
         p.line_color = "#ff0000";
         p.line_width = 8;
         this.draw_objects.push(p);
+    }
+    $.Char.prototype.ownerIntersect = function(owner_object) {
+        return isect_circle_circle(this.owner_intersect_object, owner_object);
     }
     $.Char.prototype.getFirstChar = function(text) {
         this.main = "";
@@ -551,7 +592,7 @@
             p1.draw();
         }
 
-        var s = new $.Sentence('thth', 4, 296);
+        var s = new $.Sentence('ththth', 4, 296);
         //var s = new $.Sentence('abajatatha chekesheye dilirizi fomosongo gunuvuquu hapawaxa', 4, 296);
         s.draw(canvas);
     }
@@ -637,6 +678,10 @@
 
     function isect_circle_circle(circle1, circle2) {
         default_result = [];
+
+        if (!circle1 || !circle2) {
+            return default_result;
+        }
 
         // Intersection between circles
         var mid_x = circle1.center.x - circle2.center.x;
