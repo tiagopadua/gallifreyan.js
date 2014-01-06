@@ -47,7 +47,7 @@
         // Call the "parent" class's method
         this._pre_draw(ctx);
         // Actually draw a circle with almost-zero radius
-        var radius = this.line_width / 2.1;
+        var radius = this.line_width / 2.01;
         ctx.arc(this.x, this.y, radius, 0, Math.TWOPI);
     }
 
@@ -311,8 +311,11 @@
         var arcs_angles = [];
         for (i in this.chars) {
             var c = this.chars[i];
-            c.setX(this.arcs_circle.center.x + this.arcs_circle.radius * Math.cos(current_angle));
-            c.setY(this.arcs_circle.center.y + this.arcs_circle.radius * Math.sin(current_angle));
+            // Dont use the methods 'setX' and 'setY' to avoid re-calculating everything
+            var up_angle = current_angle + Math.PI;
+            c.up_vector = new $.Point(Math.cos(up_angle), Math.sin(up_angle));
+            c.x = this.arcs_circle.center.x + this.arcs_circle.radius * Math.cos(current_angle);
+            c.y = this.arcs_circle.center.y + this.arcs_circle.radius * Math.sin(current_angle);
             c.setMaxDiameter(char_max_diameter);
             current_angle += angle_increment;
             var isect_points = c.ownerIntersect(this.arcs_circle);
@@ -360,12 +363,15 @@
 /*********************************** CHAR ************************************/
 // This can be a single character, repeated "n" times and/or followed by
 // a vowel (which could also be repeated "n" times)
-    $.Char = function(text, center_x, center_y, max_diameter) {
+    $.Char = function(text, center_x, center_y, max_diameter, up_vector) {
+        this.j_offset = .55;
+        this.b_offset = .4;
         this.draw_objects = [];
         this.max_circle = null;
         this.owner_intersect_object = null;
         this.x = typeof center_x !== 'undefined' ? center_x : this.radius;
         this.y = typeof center_y !== 'undefined' ? center_y : this.radius;
+        this.up_vector = typeof up_vector !== 'undefined' ? up_vector : new $.Point(0, -1);
         this.main = "";
         this.main_count = 0;
         this.secondary = "";
@@ -376,11 +382,11 @@
     }
     $.Char.prototype.setX = function(new_x) {
         this.x = typeof new_x !== 'undefined' ? new_x : this.radius;
-        //this.loadObjects();
+        this.loadObjects();
     }
     $.Char.prototype.setY = function(new_y) {
         this.y = typeof new_y !== 'undefined' ? new_y : this.radius;
-        //this.loadObjects();
+        this.loadObjects();
     }
     $.Char.prototype.setMaxDiameter = function(max_diameter) {
         this.max_diameter = typeof max_diameter !== 'undefined' ? max_diameter : 50;
@@ -398,7 +404,6 @@
         this.loadObjects();
     }
     $.Char.prototype.draw = function(canvas) {
-        //this.loadObjects();
         var i = null;
         for (i in this.draw_objects) {
             this.draw_objects[i].draw(canvas);
@@ -457,13 +462,37 @@
         }
     }
     $.Char.prototype.loadB = function(modifier) {
-        var p = new $.Point(this.x, this.y);
-        p.line_color = "#ffff00";
-        p.line_width = 8;
-        this.draw_objects.push(p);
+        var offset_distance = this.consonant_radius * this.b_offset;
+        var c = new $.Circle(this.x + offset_distance*this.up_vector.x, this.y + offset_distance*this.up_vector.y, this.consonant_radius);
+
+        // Check intersection points to discover the angles for the arc
+        var isects = c.intersectPoints(this.max_circle);
+        var arc_begin = 0;
+        var arc_end = Math.TWOPI;
+        if (isects.length == 2) {
+            this.owner_intersect_object = c;
+            console.log(isects[0], isects[1]);
+            var first_angle = Math.atan2(isects[0].y - this.max_circle.center.y, isects[0].x - this.max_circle.center.x);
+            var second_angle = Math.atan2(isects[1].y - this.max_circle.center.y, isects[1].x - this.max_circle.center.x);
+            if (Math.abs(first_angle - second_angle) < Math.PI) {
+                arc_begin = first_angle;
+                arc_end = second_angle;
+            } else {
+                arc_begin = second_angle;
+                arc_end = first_angle;
+            }
+        }
+
+        var a = new $.Arc();
+        a.circle = c;
+        a.begin_angle = arc_begin;
+        a.end_angle = arc_end;
+        console.log(a);
+        this.draw_objects.push(a);
     }
     $.Char.prototype.loadJ = function(modifier) {
-        var c = new $.Circle(this.x, this.y-this.radius*.55, this.consonant_radius);
+        var offset_distance = this.radius * this.j_offset;
+        var c = new $.Circle(this.x + offset_distance*this.up_vector.x, this.y + offset_distance*this.up_vector.y, this.consonant_radius);
         this.draw_objects.push(c);
     }
     $.Char.prototype.loadT = function(modifier) {
@@ -672,47 +701,7 @@
     
 /******************************** TEST ***************************************/
     $.drawTest = function(canvas) {
-        /*point = new $.Point(10, 10);
-        point.line_color = "#ff0000";
-        point.draw(canvas);
-
-        line = new $.Line(100, 0, 100, 250);
-        line.canvas = canvas;
-        line.line_color = "#ffcc00";
-        line.draw();
-
-        circle = new $.Circle(30, 100, 20);
-        circle.canvas = canvas;
-        circle.line_color = "#ccff00";
-        circle.draw();
-
-        arc = new $.Arc(170, 160, 75, -Math.PI/2, Math.PI);
-        arc.canvas = canvas;
-        arc.line_color = "#00ffcc";
-        arc.draw();
-
-        arc2 = new $.Arc(180, 200, 70, -2*Math.PI/3, 2*Math.PI/3);
-        arc2.canvas = canvas;
-        arc2.line_color = "#00ff00";
-        arc2.draw();
-
-        points = arc.intersectPoints(arc2);
-        for (p in points) {
-            p1 = new $.Point(points[p].x, points[p].y);
-            p1.canvas = canvas;
-            p1.line_color = "#ff2200";
-            p1.draw();
-        }
-
-        points = arc.intersectPoints(line);
-        for (p in points) {
-            p1 = new $.Point(points[p].x, points[p].y);
-            p1.canvas = canvas;
-            p1.line_color = "#ff2200";
-            p1.draw();
-        }*/
-
-        var s = new $.Sentence('ththt', 100, 100);
+        var s = new $.Sentence('jbth', 100, 100);
         //var s = new $.Sentence('abajatatha chekesheye dilirizi fomosongo gunuvuquu hapawaxa', 4, 296);
         s.draw(canvas);
     }
