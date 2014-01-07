@@ -14,7 +14,7 @@
         this.name = "Graphic";
         this.canvas = typeof targetCanvas !== 'undefined' ? targetCanvas : null;
         this.line_color = "#ffffff";
-        this.line_width = 1;
+        this.line_width = 2;
     }
     $.Graphic.prototype._draw = function(ctx) {
         // Intended to be inherited/overwritten
@@ -483,7 +483,6 @@
         // Maybe on other browsers it doesn't work. TODO: check it out
         var isects = circle.intersectPoints(this.word_circle);
         if (isects.length == 2) {
-            this.owner_intersect_object = circle;
             var first_angle = Math.atan2(isects[0].y - circle.center.y, isects[0].x - circle.center.x);
             var second_angle = Math.atan2(isects[1].y - circle.center.y, isects[1].x - circle.center.x);
             var up_angle = Math.atan2(this.up_vector.y, this.up_vector.x);
@@ -500,11 +499,13 @@
     $.Char.prototype.loadB = function(modifier) {
         var offset_distance = this.consonant_radius * .9;
         var c = new $.Circle(this.x + offset_distance*this.up_vector.x, this.y + offset_distance*this.up_vector.y, this.consonant_radius);
+        this.owner_intersect_object = c;
         this.loadArc(modifier, c);
     }
     $.Char.prototype.loadJ = function(modifier) {
         var offset_distance = this.radius * .55;
         var c = new $.Circle(this.x + offset_distance*this.up_vector.x, this.y + offset_distance*this.up_vector.y, this.consonant_radius);
+        this.owner_intersect_object = c;
         this.draw_objects.push(c);
     }
     $.Char.prototype.loadT = function(modifier) {
@@ -515,7 +516,6 @@
     $.Char.prototype.loadTH = function(modifier) {
         var c = new $.Circle(this.x, this.y, this.consonant_radius);
         this.draw_objects.push(c);
-        //this.owner_intersect_object = c;
     }
     $.Char.prototype.loadVowel = function() {
         var p = new $.Point(this.x, this.y);
