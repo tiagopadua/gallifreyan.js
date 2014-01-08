@@ -326,45 +326,68 @@
             c.setMaxDiameter(char_max_diameter); // Now re-calculate
 
             // Now check for intersections with the word line
-            var isect_points = c.ownerIntersect(this.arcs_circle);
+            var isect_points = c.word_intersect_points;
             if (isect_points.length == 2) {
-                isect_points.sort(function(a,b){return b-a});
+                var p1 = isect_points[0];
+                var p2 = isect_points[1];
+                var a1 = Math.atan2(p1.y - this.arcs_circle.center.y, p1.x - this.arcs_circle.center.x);
+                var a2 = Math.atan2(p2.y - this.arcs_circle.center.y, p2.x - this.arcs_circle.center.x);
+                var envolves_word_start = false;
+                if ((a1 > Math.HALFPI && a2 < Math.HALFPI) ||
+                    (a2 > Math.HALFPI && a1 < Math.HALFPI)) {
+                    envolves_word_start = true;
+                }
+
+                console.log('1a:', a1);
+                console.log('2a:', a2);
+                a1 = normalize_angle(a1, -Math.THREEQUARTERSPI);
+                a2 = normalize_angle(a2, -Math.THREEQUARTERSPI);
+
+                console.log('1b:', a1);
+                console.log('2b:', a2);
+
+                if (a2 > a1) {
+                    var a_temp = a1;
+                    a1 = a2;
+                    a2 = a_temp;
+                }
+
                 if (is_first_intersect) {
                     is_first_intersect = false;
-                    var p = isect_points[0];
-                    var a = Math.atan2(p.y - this.arcs_circle.center.y, p.x - this.arcs_circle.center.x);
-                    first_angle = normalize_angle(a, -Math.THREEQUARTERSPI) - Math.TWOPI;
-                    p = isect_points[1];
-                    a = Math.atan2(p.y - this.arcs_circle.center.y, p.x - this.arcs_circle.center.x);
-                    arcs_angles.push(normalize_angle(a, -Math.THREEQUARTERSPI));
-                } else {
-                    for (j in isect_points) {
-                        var p = isect_points[j];
-                        var a = Math.atan2(p.y - this.arcs_circle.center.y, p.x - this.arcs_circle.center.x);
-                        arcs_angles.push(normalize_angle(a, -Math.THREEQUARTERSPI));
+                    if (!envolves_word_start) {
+                        console.log('not envolves start');
+                        first_angle = a1 - Math.TWOPI;
+                        arcs_angles.push(a2);
+                    } else {
+                        first_angle = a2;
+                        arcs_angles.push(a1);
                     }
+                } else {
+                    arcs_angles.push(a1);
+                    arcs_angles.push(a2);
                 }
             }
 
             current_angle += angle_increment;
         }
         if (first_angle) {
+            console.log('pushing first');
+            console.log(first_angle);
             arcs_angles.push(first_angle);
         }
-
+/*
         // Order the arcs angles
         arcs_angles.sort(function(a,b) {
             return b-a;
         });
+*/
+        console.log(arcs_angles);
         // Add the angles to the list
         if (arcs_angles.length > 0) {
             // TODO: needs to process chars which envolves the PI
             this.arcs = [];
-            for (i=1; i<arcs_angles.length-1; i+=2) {
-                this.addArc(arcs_angles[i], arcs_angles[i+1]);
-            }
-            if (arcs_angles.length >= 2) {
-                this.addArc(arcs_angles[arcs_angles.length-1], arcs_angles[0]);
+            for (i=0; i<arcs_angles.length-1; i+=2) {
+                this.addArc(arcs_angles[i+1], arcs_angles[i]);
             }
         } else {
             this.arcs = [ new $.Arc(this.arcs_circle.center.x, this.arcs_circle.center.y, this.arcs_circle.radius, 0, Math.TWOPI) ];
@@ -386,6 +409,7 @@
         this.y = typeof center_y !== 'undefined' ? center_y : this.radius;
         this.up_vector = typeof up_vector !== 'undefined' ? up_vector : new $.Point(0, -1);
         this.word_circle = typeof owner_circle !== 'undefined' ? owner_circle : new $.Circle(0, 0, 1);
+        this.word_intersect_points = [];
         this.main = "";
         this.main_count = 0;
         this.secondary = "";
@@ -488,6 +512,9 @@
             var up_angle = Math.atan2(this.up_vector.y, this.up_vector.x);
             arc_begin = first_angle;
             arc_end = second_angle;
+            this.word_intersect_points = [ isects[0], isects[1] ];
+        } else {
+            this.word_intersect_points = [];
         }
 
         var a = new $.Arc();
@@ -528,9 +555,6 @@
         p.line_color = "#ff0000";
         p.line_width = 8;
         this.draw_objects.push(p);
-    }
-    $.Char.prototype.ownerIntersect = function(owner_object) {
-        return isect_circle_circle(this.owner_intersect_object, owner_object);
     }
     $.Char.prototype.getFirstChar = function(text) {
         this.main = "";
@@ -725,7 +749,7 @@
 /******************************** TEST ***************************************/
     $.drawTest = function(canvas) {
         //var s = new $.Sentence('jbthjbthjbth', 100, 100);
-        var s = new $.Sentence('jbtht', 100, 100);
+        var s = new $.Sentence('bjthtjbtht', 100, 100);
         //var s = new $.Sentence('abajatatha chekesheye dilirizi fomosongo gunuvuquu hapawaxa', 4, 296);
         s.draw(canvas);
     }
