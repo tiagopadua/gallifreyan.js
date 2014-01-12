@@ -238,6 +238,9 @@
         this.setText(text);
     }
     $.Sentence.prototype.draw = function(canvas) {
+        // clear first
+        var context = canvas.getContext("2d");
+        context.clearRect(0, 0, canvas.width, canvas.height);
         var i = null;
         var arc = null;
         var word = null;
@@ -257,7 +260,7 @@
         word_list = this.text.split(' ');
         for (i in word_list) {
             w = word_list[i];
-            w_object = new $.Word(w, this.left + this.size/2, this.top + this.size/2);
+            w_object = new $.Word(w, this.left + this.size/2, this.top + this.size/2, this.inside_circle.radius * 1.8);
             this.words.push(w_object);
         }
     }
@@ -329,6 +332,11 @@
             char_max_diameter = 2 * this.radius * sin_alpha / (sin_alpha + 1);
             this.arcs_circle.radius = this.radius - (char_max_diameter / 2);
         }
+        this.arcs_circle = this.positionChars(char_max_diameter, true);
+        this.positionChars(char_max_diameter);
+    }
+    $.Word.prototype.positionChars = function(char_max_diameter, resize_word_circle) {
+        resize_word_circle = typeof resize_word_circle !== "boolean" ? false : resize_word_circle;
 
         // Position the char
         var i = null;
@@ -342,10 +350,10 @@
         var new_center = new $.Point(this.arcs_circle.center.x, this.arcs_circle.center.y);
         for (i in this.chars) {
             var c = this.chars[i];
-            // Dont use the methods 'setX' and 'setY' to avoid re-calculating everything
             var up_angle = current_angle + Math.PI;
             c.up_vector = new $.Point(Math.cos(up_angle), Math.sin(up_angle));
             c.word_circle = this.arcs_circle;
+            // Dont use the methods 'setX' and 'setY' to avoid re-calculating everything
             c.x = this.arcs_circle.center.x + this.arcs_circle.radius * Math.cos(current_angle);
             c.y = this.arcs_circle.center.y + this.arcs_circle.radius * Math.sin(current_angle);
             c.setMaxDiameter(char_max_diameter); // Now re-calculate
@@ -386,10 +394,10 @@
                     arcs_angles.push(a2);
                 }
             }
-            var temp_increase = c.max_used_word_radius - this.arcs_circle.radius;
-            //radius_increase += temp_increase * temp_increase;
-            new_center.x += c.max_used_word_radius * Math.cos(up_angle) / this.chars.length;
-            new_center.y += c.max_used_word_radius * Math.sin(up_angle) / this.chars.length;
+            if (resize_word_circle) {
+                new_center.x += c.max_used_word_radius * Math.cos(up_angle) / this.chars.length;
+                new_center.y += c.max_used_word_radius * Math.sin(up_angle) / this.chars.length;
+            }
             current_angle += angle_increment;
         }
         if (first_angle) {
@@ -404,15 +412,27 @@
         } else {
             this.arcs = [ new $.Arc(this.arcs_circle.center.x, this.arcs_circle.center.y, this.arcs_circle.radius, 0, Math.TWOPI) ];
         }
-        for (i in this.chars) {
-            c = this.chars[i];
-            var target_x = new_center.x - c.up_vector.x * this.max_diameter;
-            var target_y = new_center.y - c.up_vector.y * this.max_diameter;
-            var helper_line = new $.Line(new_center.x, new_center.y, target_x, target_y);
-            var isect_points = helper_line.intersectPoints(this.circle);
+        var new_size_circle = this.arcs_circle;
+        if (resize_word_circle) {
+            var new_radius = this.radius;
+            for (i in this.chars) {
+                c = this.chars[i];
+                var target_x = new_center.x - c.up_vector.x * this.max_diameter;
+                var target_y = new_center.y - c.up_vector.y * this.max_diameter;
+                var helper_line = new $.Line(new_center.x, new_center.y, target_x, target_y);
+                var isect_points = helper_line.intersectPoints(this.circle);
+                if (isect_points.length > 0) {
+                    var p = isect_points[0];
+                    var dx = p.x - new_center.x;
+                    var dy = p.y - new_center.y;
+                    var char_new_max_radius = Math.sqrt(dx*dx + dy*dy);
+                    char_new_max_radius -= c.max_used_word_radius - this.arcs_circle.radius;
+                    new_radius = Math.min(new_radius, char_new_max_radius);
+                }
+            }
+            new_size_circle = new $.Circle(new_center.x, new_center.y, new_radius);
         }
-        //radius_increase = Math.sqrt(radius_increase);
-        //this.arcs.push(new $.Circle(new_center.x, new_center.y, this.arcs_circle.radius + radius_increase));
+        return new_size_circle;
     }
     $.Word.prototype.addArc = function(begin_angle, end_angle) {
         this.arcs.push(new $.Arc(this.arcs_circle.center.x, this.arcs_circle.center.y, this.arcs_circle.radius, begin_angle, end_angle));
@@ -560,8 +580,8 @@
         this.max_used_word_radius = this.word_circle.radius;
     }
     $.Char.prototype.loadT = function(modifier) {
-        var offset_distance = -this.consonant_radius * .6;
-        var c = new $.Circle(this.x + offset_distance*this.up_vector.x, this.y + offset_distance*this.up_vector.y, this.consonant_radius);
+        var offset_distance = -this.consonant_radius;
+        var c = new $.Circle(this.x + offset_distance*this.up_vector.x, this.y + offset_distance*this.up_vector.y, this.consonant_radius * 2.5);
         this.loadArc(modifier, c);
         this.max_used_word_radius = this.word_circle.radius;
     }
@@ -774,8 +794,8 @@
     
 /******************************** TEST ***************************************/
     $.drawTest = function(canvas) {
-        var s = new $.Sentence('btht', 100, 100);
-        //var s = new $.Sentence('thjbthbthbtjtjb', 100, 100);
+        var s = new $.Sentence('bthtj', 20, 20, 460);
+        //var s = new $.Sentence('jthjthjthbjbjbj', 100, 100);
         //var s = new $.Sentence('abajatatha chekesheye dilirizi fomosongo gunuvuquu hapawaxa', 4, 296);
         s.draw(canvas);
     }
