@@ -10,7 +10,7 @@
 
 <body>
  <div class="container" id="mainContainer">
-  <input type="text" value="bthtj" onchange="textChanged(this);" onkeypress="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();"/>
+  <input type="text" placeholder="Type your text to translate" onchange="textChanged(this);" onkeypress="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();"/>
   <div class="blueprint img-rounded">
    <canvas id="canvas" width="500" height="500"></canvas>
   </div>
@@ -18,11 +18,10 @@
  <script type="text/javascript" src="../js/gallifreyan.js"></script>
  <script language="javascript">
 
-var sentence = new gallifreyan.Sentence('t', 20, 20, 460);
+var sentence = new gallifreyan.Sentence('', 20, 20, 460);
 sentence.draw(document.getElementById("canvas"));
 
 function textChanged(obj) {
-    console.log(obj);
     var target = document.getElementById("canvas");
     sentence.setText(obj.value);
     sentence.draw(target);
