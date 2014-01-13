@@ -5,7 +5,7 @@
     Math.HALFPI = Math.PI / 2;
     Math.THREEQUARTERSPI = Math.PI + Math.HALFPI
 
-    $.draw_guidelines = true;
+    $.draw_guidelines = false;
     $.guideline_color = "#333333";
 
 
@@ -39,10 +39,13 @@
 
 
 /******************************* POINT ***************************************/
-    $.Point = function(x, y) {
+    $.Point = function(x, y, size) {
         this.name = "Point";
         this.x = typeof x !== 'undefined' ? x : 0;
         this.y = typeof y !== 'undefined' ? y : 0;
+        if (typeof size === 'number') {
+            this.line_width = size;
+        }
     }
     $.Point.prototype = new gallifreyan.Graphic();
     $.Point.prototype._pre_draw = $.Point.prototype._draw;
@@ -302,14 +305,13 @@
         this.chars = [];
         var last_len = 0;
         var c = null;
-        do {
+         while ((text.length > 0) && (last_len != text.length)) {
             c = new $.Char(text);
-            console.log("  ", c.main, "x", c.main_count, "  |  ", c.secondary, "x", c.secondary_count);
+            //console.log("  ", c.main, "x", c.main_count, "  |  ", c.secondary, "x", c.secondary_count);
             this.chars.push(c);
             last_len = text.length;
             text = text.substr(c.main.length*c.main_count + c.secondary.length*c.secondary_count);
-        } while ((text.length > 0) && (last_len != text.length));
-
+        }
         this.setDimensions();
     }
     $.Word.prototype.setDimensions = function() {
@@ -319,21 +321,24 @@
 
         // Split homogeneously the word circle, to fit exactly all char circles
         var char_max_diameter = 20;
-        if (this.chars.length == 1) {
-            this.arcs_circle.center.y = this.y - this.radius*.3;
-            this.arcs_circle.radius = this.radius * .7;
-            char_max_diameter = this.max_diameter * .6;
-        } else {
-            this.arcs_circle.center.y = this.y;
+        if (this.chars.length > 0) {
+            if (this.chars.length == 1) {
+                this.arcs_circle.center.y = this.y - this.radius*.3;
+                this.arcs_circle.radius = this.radius * .7;
+                char_max_diameter = this.max_diameter * .6;
+            } else {
+                this.arcs_circle.center.y = this.y;
 
-            var alpha = (Math.TWOPI / this.chars.length) / 2;
-            var sin_alpha = Math.sin(alpha);
+                var alpha = (Math.TWOPI / this.chars.length) / 2;
+                var sin_alpha = Math.sin(alpha);
 
-            char_max_diameter = 2 * this.radius * sin_alpha / (sin_alpha + 1);
-            this.arcs_circle.radius = this.radius - (char_max_diameter / 2);
+                char_max_diameter = 2 * this.radius * sin_alpha / (sin_alpha + 1);
+                this.arcs_circle.radius = this.radius - (char_max_diameter / 2);
+            
+                this.arcs_circle = this.positionChars(char_max_diameter, true);
+            }
+            this.positionChars(char_max_diameter);
         }
-        this.arcs_circle = this.positionChars(char_max_diameter, true);
-        this.positionChars(char_max_diameter);
     }
     $.Word.prototype.positionChars = function(char_max_diameter, resize_word_circle) {
         resize_word_circle = typeof resize_word_circle !== "boolean" ? false : resize_word_circle;
@@ -350,8 +355,8 @@
         var new_center = new $.Point(this.arcs_circle.center.x, this.arcs_circle.center.y);
         for (i in this.chars) {
             var c = this.chars[i];
-            var up_angle = current_angle + Math.PI;
-            c.up_vector = new $.Point(Math.cos(up_angle), Math.sin(up_angle));
+            c.up_angle = current_angle + Math.PI;
+            c.up_vector = new $.Point(Math.cos(c.up_angle), Math.sin(c.up_angle));
             c.word_circle = this.arcs_circle;
             // Dont use the methods 'setX' and 'setY' to avoid re-calculating everything
             c.x = this.arcs_circle.center.x + this.arcs_circle.radius * Math.cos(current_angle);
@@ -395,8 +400,8 @@
                 }
             }
             if (resize_word_circle) {
-                new_center.x += c.max_used_word_radius * Math.cos(up_angle) / this.chars.length;
-                new_center.y += c.max_used_word_radius * Math.sin(up_angle) / this.chars.length;
+                new_center.x += c.max_used_word_radius * Math.cos(c.up_angle) / this.chars.length;
+                new_center.y += c.max_used_word_radius * Math.sin(c.up_angle) / this.chars.length;
             }
             current_angle += angle_increment;
         }
@@ -448,6 +453,7 @@
         this.owner_intersect_object = null;
         this.x = typeof center_x !== 'undefined' ? center_x : this.radius;
         this.y = typeof center_y !== 'undefined' ? center_y : this.radius;
+        this.up_angle = -Math.HALFPI;
         this.up_vector = typeof up_vector !== 'undefined' ? up_vector : new $.Point(0, -1);
         this.word_circle = typeof owner_circle !== 'undefined' ? owner_circle : new $.Circle(0, 0, 1);
         this.word_intersect_points = [];
@@ -502,36 +508,44 @@
             var modifier = null;
             if (this.main == 'ch') { modifier = '2dots'; }
             else if (this.main == 'd') { modifier = '3dots'; }
-            else if (this.main == 'f') { modifier = '3stripes'; }
-            else if (this.main == 'g') { modifier = '1stripe'; }
-            else if (this.main == 'h') { modifier = '2stripes'; }
+            else if (this.main == 'f') { modifier = '3lines'; }
+            else if (this.main == 'g') { modifier = '1line'; }
+            else if (this.main == 'h') { modifier = '2lines'; }
             this.loadB(modifier);
         } else if (/^[jklmnp]$/i.test(this.main)) {
             var modifier = null;
             if (this.main == 'k') { modifier = '2dots'; }
             else if (this.main == 'l') { modifier = '3dots'; }
-            else if (this.main == 'm') { modifier = '3stripes'; }
-            else if (this.main == 'n') { modifier = '1stripe'; }
-            else if (this.main == 'p') { modifier = '2stripes'; }
+            else if (this.main == 'm') { modifier = '3lines'; }
+            else if (this.main == 'n') { modifier = '1line'; }
+            else if (this.main == 'p') { modifier = '2lines'; }
             this.loadJ(modifier);
         } else if (/^([trsvw]|sh)$/i.test(this.main)) {
             var modifier = null;
             if (this.main == 'sh') { modifier = '2dots'; }
             else if (this.main == 'r') { modifier = '3dots'; }
-            else if (this.main == 's') { modifier = '3stripes'; }
-            else if (this.main == 'v') { modifier = '1stripe'; }
-            else if (this.main == 'w') { modifier = '2stripes'; }
+            else if (this.main == 's') { modifier = '3lines'; }
+            else if (this.main == 'v') { modifier = '1line'; }
+            else if (this.main == 'w') { modifier = '2lines'; }
             this.loadT(modifier);
         } else if (/^([yzx]|th|ng|qu)$/i.test(this.main)) {
             var modifier = null;
             if (this.main == 'y') { modifier = '2dots'; }
             else if (this.main == 'z') { modifier = '3dots'; }
-            else if (this.main == 'ng') { modifier = '3stripes'; }
-            else if (this.main == 'qu') { modifier = '1stripe'; }
-            else if (this.main == 'x') { modifier = '2stripes'; }
+            else if (this.main == 'ng') { modifier = '3lines'; }
+            else if (this.main == 'qu') { modifier = '1line'; }
+            else if (this.main == 'x') { modifier = '2lines'; }
             this.loadTH(modifier);
-        } else if (/^[aeiou]$/i.test(this.main)) {
-            this.loadVowel();
+        } else if (/^a$/i.test(this.main)) {
+            this.loadA(this.word_circle);
+        } else if (/^e$/i.test(this.main)) {
+            this.loadE(this.word_circle);
+        } else if (/^i$/i.test(this.main)) {
+            this.loadI(this.word_circle);
+        } else if (/^o$/i.test(this.main)) {
+            this.loadO(this.word_circle);
+        } else if (/^u$/i.test(this.main)) {
+            this.loadU(this.word_circle);
         } else {
             this.loadOther();
         }
@@ -540,6 +554,60 @@
         if (!this.secondary || this.secondary.length <= 0 || this.secondary_count <= 0) {
             return;
         }
+    }
+    $.Char.prototype.loadModifier = function(modifier, circle) {
+        var distance = 1;
+        var small_dot_size = this.consonant_radius * .07;
+        var big_dot_size = this.consonant_radius * .10;
+        var angle_ratio = circle.radius / Math.PI;
+        switch (modifier) {
+            case '3dots':
+                var p3_angle = (this.up_angle * angle_ratio - big_dot_size) / angle_ratio;
+                var p3 = new $.Point(
+                    circle.center.x + Math.cos(p3_angle) * (circle.radius - big_dot_size * 1.8),
+                    circle.center.y + Math.sin(p3_angle) * (circle.radius - big_dot_size * 1.8),
+                    small_dot_size);
+                this.draw_objects.push(p3);
+            case '2dots':
+                var p1 = new $.Point(
+                    circle.center.x + this.up_vector.x * (circle.radius - big_dot_size * 1.8),
+                    circle.center.y + this.up_vector.y * (circle.radius - big_dot_size * 1.8),
+                    big_dot_size);
+                this.draw_objects.push(p1);
+                var p2_angle = (this.up_angle * angle_ratio + big_dot_size) / angle_ratio;
+                var p2 = new $.Point(
+                    circle.center.x + Math.cos(p2_angle) * (circle.radius - big_dot_size * 1.8),
+                    circle.center.y + Math.sin(p2_angle) * (circle.radius - big_dot_size * 1.8),
+                    small_dot_size);
+                this.draw_objects.push(p2);
+                break;
+            case '2lines':
+                var l1_angle = (this.up_angle * angle_ratio - big_dot_size / 2) / angle_ratio;
+                this.loadModifierLine(circle, l1_angle);
+                var l2_angle = (this.up_angle * angle_ratio + big_dot_size / 2) / angle_ratio;
+                this.loadModifierLine(circle, l2_angle);
+                break;
+            case '3lines':
+                var l3_angle = (this.up_angle * angle_ratio - big_dot_size) / angle_ratio;
+                var l2_angle = (this.up_angle * angle_ratio + big_dot_size) / angle_ratio;
+                this.loadModifierLine(circle, l3_angle);
+                this.loadModifierLine(circle, l2_angle);
+            case '1line':
+                this.loadModifierLine(circle, this.up_angle);
+                break;
+        }
+    }
+    $.Char.prototype.loadModifierLine = function(circle, angle) {
+        var l = new $.Line(
+            circle.center.x + Math.cos(angle) * circle.radius,
+            circle.center.y + Math.sin(angle) * circle.radius,
+            circle.center.x + Math.cos(angle) * this.word_circle.radius * 3,
+            circle.center.y + Math.sin(angle) * this.word_circle.radius * 3);
+        var p_list = l.intersectPoints(this.word_circle);
+        if (p_list.length > 0) {
+            l.end = p_list[0];
+        }
+        this.draw_objects.push(l);
     }
     $.Char.prototype.loadArc = function(modifier, circle) {
         // Check intersection points to discover the angles for the arc
@@ -551,7 +619,6 @@
         if (isects.length == 2) {
             var first_angle = Math.atan2(isects[0].y - circle.center.y, isects[0].x - circle.center.x);
             var second_angle = Math.atan2(isects[1].y - circle.center.y, isects[1].x - circle.center.x);
-            var up_angle = Math.atan2(this.up_vector.y, this.up_vector.x);
             arc_begin = first_angle;
             arc_end = second_angle;
             this.word_intersect_points = [ isects[0], isects[1] ];
@@ -564,6 +631,8 @@
         a.begin_angle = arc_begin;
         a.end_angle = arc_end;
         this.draw_objects.push(a);
+
+        this.loadModifier(modifier, circle);
     }
     $.Char.prototype.loadB = function(modifier) {
         var offset_distance = this.consonant_radius * .9;
@@ -571,30 +640,109 @@
         this.owner_intersect_object = c;
         this.loadArc(modifier, c);
         this.max_used_word_radius = this.word_circle.radius;
+        this.loadSecondaryVowel(c, true);
     }
     $.Char.prototype.loadJ = function(modifier) {
         var offset_distance = this.radius * .55;
         var c = new $.Circle(this.x + offset_distance*this.up_vector.x, this.y + offset_distance*this.up_vector.y, this.consonant_radius);
         this.owner_intersect_object = c;
         this.draw_objects.push(c);
+        this.loadModifier(modifier, c);
         this.max_used_word_radius = this.word_circle.radius;
+        this.loadSecondaryVowel(c);
     }
     $.Char.prototype.loadT = function(modifier) {
-        var offset_distance = -this.consonant_radius;
-        var c = new $.Circle(this.x + offset_distance*this.up_vector.x, this.y + offset_distance*this.up_vector.y, this.consonant_radius * 2.5);
+        var offset_distance = -this.consonant_radius * 2.3;
+        var c = new $.Circle(this.x + offset_distance*this.up_vector.x, this.y + offset_distance*this.up_vector.y, this.consonant_radius * 3);
         this.loadArc(modifier, c);
         this.max_used_word_radius = this.word_circle.radius;
+        this.loadSecondaryVowel(c);
     }
     $.Char.prototype.loadTH = function(modifier) {
         var c = new $.Circle(this.x, this.y, this.consonant_radius);
         this.draw_objects.push(c);
+        this.loadModifier(modifier, c);
         this.max_used_word_radius = this.word_circle.radius + this.consonant_radius;
+        this.loadSecondaryVowel(c);
     }
-    $.Char.prototype.loadVowel = function() {
-        var p = new $.Point(this.x, this.y);
-        p.line_color = "#00ffff";
-        p.line_width = 8;
-        this.draw_objects.push(p);
+    $.Char.prototype.loadA = function(circle, is_secondary) {
+        is_secondary = typeof is_secondary === "boolean" ? is_secondary : false;
+        var distance_factor = 1.6;
+        var c = new $.Circle(
+            this.x - this.up_vector.x * this.vowel_radius * distance_factor,
+            this.y - this.up_vector.y * this.vowel_radius * distance_factor,
+            this.vowel_radius);
+        if (!(is_secondary && /^th$/i.test(this.main))) {
+            this.max_used_word_radius = this.word_circle.radius + this.vowel_radius * distance_factor;
+        }
+        this.draw_objects.push(c);
+        return c;
+    }
+    $.Char.prototype.loadE = function(circle, is_secondary) {
+        is_secondary = typeof is_secondary === "boolean" ? is_secondary : false;
+        var c_x = this.x;
+        var c_y = this.y;
+        if (is_secondary) {
+            if (/^t$/i.test(this.main)) {
+                c_x = this.x + this.up_vector.x * this.vowel_radius;
+                c_y = this.y + this.up_vector.y * this.vowel_radius;
+            } else {
+                c_x = circle.center.x;
+                c_y = circle.center.y;
+            }
+        }
+        var c = new $.Circle(c_x, c_y, this.vowel_radius);
+        /*if (is_secondary) {
+            if (/^t$/i.test(this.main)) {
+                this.max_used_word_radius = this.word_circle.radius + this.vowel_radius;
+            }
+        } else {*/
+        if (!is_secondary) {
+            this.max_used_word_radius = this.word_circle.radius + this.vowel_radius;
+        }
+        this.draw_objects.push(c);
+        return c;
+    }
+    $.Char.prototype.loadI = function(circle, is_secondary) {
+        is_secondary = typeof is_secondary === "boolean" ? is_secondary : false;
+        var c = this.loadE(circle, is_secondary);
+        this.loadModifierLine(c, this.up_angle);
+    }
+    $.Char.prototype.loadO = function(circle, is_secondary) {
+        is_secondary = typeof is_secondary === "boolean" ? is_secondary : false;
+        var distance_factor = 1.5;
+        var c_x = 0;
+        var c_y = 0;
+        if (is_secondary) {
+            c_x = circle.center.x + this.up_vector.x * circle.radius;
+            c_y = circle.center.y + this.up_vector.y * circle.radius;
+        } else {
+            c_x = this.x + this.up_vector.x * this.vowel_radius * distance_factor;
+            c_y = this.y + this.up_vector.y * this.vowel_radius * distance_factor;
+        }
+        var c = new $.Circle(c_x, c_y, this.vowel_radius);
+        if (!(is_secondary && /^th$/i.test(this.main))) {
+            this.max_used_word_radius = this.word_circle.radius;
+        }
+        this.draw_objects.push(c);
+        return c;
+    }
+    $.Char.prototype.loadU = function(circle, is_secondary) {
+        var c = this.loadE(circle, is_secondary);
+        this.loadModifierLine(c, this.up_angle - Math.PI);
+    }
+    $.Char.prototype.loadSecondaryVowel = function(circle) {
+        if (/^a$/i.test(this.secondary)) {
+            this.loadA(this.word_circle, true);
+        } else if (/^e$/i.test(this.secondary)) {
+            this.loadE(circle, true);
+        } else if (/^i$/i.test(this.secondary)) {
+            this.loadI(circle, true);
+        } else if (/^o$/i.test(this.secondary)) {
+            this.loadO(circle, true);
+        } else if (/^u$/i.test(this.secondary)) {
+            this.loadU(circle, true);
+        }
     }
     $.Char.prototype.loadOther = function() {
         var p = new $.Point(this.x, this.y);
