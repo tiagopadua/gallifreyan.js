@@ -568,7 +568,6 @@
                     circle.center.y + Math.sin(p3_angle) * (circle.radius - big_dot_size * 1.8),
                     small_dot_size);
                 this.draw_objects.push(p3);
-            case '2dots':
                 var p1 = new $.Point(
                     circle.center.x + this.up_vector.x * (circle.radius - big_dot_size * 1.8),
                     circle.center.y + this.up_vector.y * (circle.radius - big_dot_size * 1.8),
@@ -578,6 +577,20 @@
                 var p2 = new $.Point(
                     circle.center.x + Math.cos(p2_angle) * (circle.radius - big_dot_size * 1.8),
                     circle.center.y + Math.sin(p2_angle) * (circle.radius - big_dot_size * 1.8),
+                    small_dot_size);
+                this.draw_objects.push(p2);
+                break;
+            case '2dots':
+                var p1_angle = (this.up_angle * angle_ratio - small_dot_size / 1.8) / angle_ratio;
+                var p1 = new $.Point(
+                    circle.center.x + Math.cos(p1_angle) * (circle.radius - big_dot_size * 1.5),
+                    circle.center.y + Math.sin(p1_angle) * (circle.radius - big_dot_size * 1.5),
+                    small_dot_size);
+                this.draw_objects.push(p1);
+                var p2_angle = (this.up_angle * angle_ratio + small_dot_size / 1.8) / angle_ratio;
+                var p2 = new $.Point(
+                    circle.center.x + Math.cos(p2_angle) * (circle.radius - big_dot_size * 1.5),
+                    circle.center.y + Math.sin(p2_angle) * (circle.radius - big_dot_size * 1.5),
                     small_dot_size);
                 this.draw_objects.push(p2);
                 break;
@@ -672,7 +685,7 @@
             this.x - this.up_vector.x * this.vowel_radius * distance_factor,
             this.y - this.up_vector.y * this.vowel_radius * distance_factor,
             this.vowel_radius);
-        if (!(is_secondary && /^th$/i.test(this.main))) {
+        if (!(is_secondary && /^([yzx]|th|ng|qu)$/i.test(this.main))) {
             this.max_used_word_radius = this.word_circle.radius + this.vowel_radius * distance_factor;
         }
         this.draw_objects.push(c);
@@ -683,7 +696,7 @@
         var c_x = this.x;
         var c_y = this.y;
         if (is_secondary) {
-            if (/^t$/i.test(this.main)) {
+            if (/^([trsvw]|sh)$/i.test(this.main)) {
                 c_x = this.x + this.up_vector.x * this.vowel_radius;
                 c_y = this.y + this.up_vector.y * this.vowel_radius;
             } else {
@@ -721,7 +734,7 @@
             c_y = this.y + this.up_vector.y * this.vowel_radius * distance_factor;
         }
         var c = new $.Circle(c_x, c_y, this.vowel_radius);
-        if (!(is_secondary && /^th$/i.test(this.main))) {
+        if (!(is_secondary && /^([yzx]|th|ng|qu)$/i.test(this.main))) {
             this.max_used_word_radius = this.word_circle.radius;
         }
         this.draw_objects.push(c);
