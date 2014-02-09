@@ -379,7 +379,7 @@
                 a1 = normalize_angle(a1, -Math.THREEQUARTERSPI);
                 a2 = normalize_angle(a2, -Math.THREEQUARTERSPI);
 
-                if (a2 > a1) {
+                if ((a2 > a1) || (is_first_intersect && (a1 > -Math.PI) && (a2 < -Math.PI))) {
                     var a_temp = a1;
                     a1 = a2;
                     a2 = a_temp;
@@ -465,6 +465,8 @@
         this.getFirstChar(text);
         this.max_used_word_radius = this.word_circle.radius + this.radius;
         this.setMaxDiameter(max_diameter);
+        this.dots = [];
+        this.lines = [];
     }
     $.Char.prototype.setX = function(new_x) {
         this.x = typeof new_x !== 'undefined' ? new_x : this.radius;
@@ -560,6 +562,8 @@
         var small_dot_size = this.consonant_radius * .07;
         var big_dot_size = this.consonant_radius * .10;
         var angle_ratio = circle.radius / Math.PI;
+        this.dots = [];
+        this.lines = [];
         switch (modifier) {
             case '3dots':
                 var p3_angle = (this.up_angle * angle_ratio - big_dot_size) / angle_ratio;
@@ -567,17 +571,20 @@
                     circle.center.x + Math.cos(p3_angle) * (circle.radius - big_dot_size * 1.8),
                     circle.center.y + Math.sin(p3_angle) * (circle.radius - big_dot_size * 1.8),
                     small_dot_size);
+                this.dots.push(p3);
                 this.draw_objects.push(p3);
                 var p1 = new $.Point(
                     circle.center.x + this.up_vector.x * (circle.radius - big_dot_size * 1.8),
                     circle.center.y + this.up_vector.y * (circle.radius - big_dot_size * 1.8),
                     big_dot_size);
+                this.dots.push(p1);
                 this.draw_objects.push(p1);
                 var p2_angle = (this.up_angle * angle_ratio + big_dot_size) / angle_ratio;
                 var p2 = new $.Point(
                     circle.center.x + Math.cos(p2_angle) * (circle.radius - big_dot_size * 1.8),
                     circle.center.y + Math.sin(p2_angle) * (circle.radius - big_dot_size * 1.8),
                     small_dot_size);
+                this.dots.push(p2);
                 this.draw_objects.push(p2);
                 break;
             case '2dots':
@@ -620,6 +627,7 @@
         if (p_list.length > 0) {
             l.end = p_list[0];
         }
+        this.lines.push(l);
         this.draw_objects.push(l);
     }
     $.Char.prototype.loadArc = function(modifier, circle) {
@@ -719,6 +727,8 @@
     $.Char.prototype.loadI = function(circle, is_secondary) {
         is_secondary = typeof is_secondary === "boolean" ? is_secondary : false;
         var c = this.loadE(circle, is_secondary);
+        this.dots = [];
+        this.lines = [];
         this.loadModifierLine(c, this.up_angle);
     }
     $.Char.prototype.loadO = function(circle, is_secondary) {
@@ -742,6 +752,8 @@
     }
     $.Char.prototype.loadU = function(circle, is_secondary) {
         var c = this.loadE(circle, is_secondary);
+        this.dots = [];
+        this.lines = [];
         this.loadModifierLine(c, this.up_angle - Math.PI);
     }
     $.Char.prototype.loadSecondaryVowel = function(circle) {
