@@ -248,6 +248,11 @@
         // clear first
         var context = canvas.getContext("2d");
         context.clearRect(0, 0, canvas.width, canvas.height);
+        var background = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+        background.addColorStop(0, '#00345c');
+        background.addColorStop(1, '#001940');
+        context.fillStyle = background;
+        context.fillRect(0, 0, canvas.width, canvas.height);
         var i = null;
         var arc = null;
         var word = null;
