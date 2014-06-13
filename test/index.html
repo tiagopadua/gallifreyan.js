@@ -12,6 +12,7 @@
  <div class="container" id="mainContainer">
   <input type="text" placeholder="Type your text to translate" onchange="textChanged(this);" onkeypress="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();"/>
   <span id="coords">0x0</span>
+  <a id="download" download="gallifreyan.png"><input type="button" value="Download as PNG"/></a>
   <div class="blueprint img-rounded">
    <canvas id="canvas" width="500" height="500"></canvas>
   </div>
@@ -31,6 +32,11 @@ function textChanged(obj) {
 document.getElementById('canvas').onmousemove = function(e) {
     document.getElementById('coords').innerText = e.offsetX.toString() + "x" + e.offsetY.toString();
 };
+
+document.getElementById('download').onclick = function() {
+    var canvas = document.getElementById("canvas");
+    this.href = canvas.toDataURL("image/png");
+}
 
  </script>
 </body>
