@@ -16,6 +16,7 @@
         this.line_color = "#ffffff";
         //this.line_color = "#87b8e7";
         this.line_width = 2;
+        this.visible = true;
     }
     $.Graphic.prototype._draw = function(ctx) {
         // Intended to be inherited/overwritten
@@ -24,6 +25,9 @@
         ctx.lineCap = "round";
     }
     $.Graphic.prototype.draw = function(canvas) {
+        if (!this.visible) {
+            return;
+        }
         if (typeof canvas !== 'undefined') {
             this.canvas = canvas;
         }
@@ -317,7 +321,6 @@
         var c = null;
          while ((text.length > 0) && (last_len != text.length)) {
             c = new $.Char(text);
-            //console.log("  ", c.main, "x", c.main_count, "  |  ", c.secondary, "x", c.secondary_count);
             this.chars.push(c);
             last_len = text.length;
             text = text.substr(c.main.length*c.main_count + c.secondary.length*c.secondary_count);
@@ -348,6 +351,7 @@
                 this.arcs_circle = this.positionChars(char_max_diameter, true);
             }
             this.positionChars(char_max_diameter);
+            this.shareCharModLines();
         }
     }
     $.Word.prototype.positionChars = function(char_max_diameter, resize_word_circle) {
@@ -449,6 +453,23 @@
         }
         return new_size_circle;
     }
+    $.Word.prototype.shareCharModLines = function() {
+        var i = 0;
+        var total_lines = 0;
+        var last_shareable_char = null;
+        for (i in this.chars) {
+            var c = this.chars[i];
+            if (c.mod_lines && c.mod_lines.length <= 0) {
+                continue;
+            }
+            if (last_shareable_char) {
+                c.shareModifierLine([last_shareable_char]);
+                last_shareable_char = null;
+                continue;
+            }
+            last_shareable_char = c;
+        }
+    }
     $.Word.prototype.addArc = function(begin_angle, end_angle) {
         this.arcs.push(new $.Arc(this.arcs_circle.center.x, this.arcs_circle.center.y, this.arcs_circle.radius, begin_angle, end_angle));
     }
@@ -476,7 +497,7 @@
         this.max_used_word_radius = this.word_circle.radius + this.radius;
         this.setMaxDiameter(max_diameter);
         this.dots = [];
-        this.lines = [];
+        this.mod_lines = [];
     }
     $.Char.prototype.setX = function(new_x) {
         this.x = typeof new_x !== 'undefined' ? new_x : this.radius;
@@ -573,7 +594,7 @@
         var big_dot_size = this.consonant_radius * .10;
         var angle_ratio = circle.radius / Math.PI;
         this.dots = [];
-        this.lines = [];
+        this.mod_lines = [];
         switch (modifier) {
             case '3dots':
                 var p3_angle = (this.up_angle * angle_ratio - big_dot_size) / angle_ratio;
@@ -621,7 +642,9 @@
                 var l3_angle = (this.up_angle * angle_ratio - big_dot_size) / angle_ratio;
                 var l2_angle = (this.up_angle * angle_ratio + big_dot_size) / angle_ratio;
                 this.loadModifierLine(circle, l3_angle);
+                this.loadModifierLine(circle, this.up_angle);
                 this.loadModifierLine(circle, l2_angle);
+                break;
             case '1line':
                 this.loadModifierLine(circle, this.up_angle);
                 break;
@@ -637,8 +660,33 @@
         if (p_list.length > 0) {
             l.end = p_list[0];
         }
-        this.lines.push(l);
+        this.mod_lines.push(l);
         this.draw_objects.push(l);
+    }
+    $.Char.prototype.shareModifierLine = function(shared_list) {
+        if (this.mod_lines && this.mod_lines.length <= 0) {
+            return;
+        }
+        var already_shared = 0;
+        var i = 0;
+        for (i in shared_list) {
+            var shared = shared_list[i];
+            if (shared.mod_lines && shared.mod_lines.length <= 0) {
+                continue;
+            }
+
+            if (this.mod_lines.length == shared.mod_lines.length) {
+                for (j in this.mod_lines) {
+                    var k = shared.mod_lines.length - j - 1;
+                    shared_line = shared.mod_lines[k];
+                    shared_line.visible = false;
+
+                    var this_line = this.mod_lines[j];
+                    this_line.end.x = shared_line.begin.x;
+                    this_line.end.y = shared_line.begin.y;
+                }
+            }
+        }
     }
     $.Char.prototype.loadArc = function(modifier, circle) {
         // Check intersection points to discover the angles for the arc
@@ -738,7 +786,7 @@
         is_secondary = typeof is_secondary === "boolean" ? is_secondary : false;
         var c = this.loadE(circle, is_secondary);
         this.dots = [];
-        this.lines = [];
+        this.mod_lines = [];
         this.loadModifierLine(c, this.up_angle);
     }
     $.Char.prototype.loadO = function(circle, is_secondary) {
@@ -763,7 +811,7 @@
     $.Char.prototype.loadU = function(circle, is_secondary) {
         var c = this.loadE(circle, is_secondary);
         this.dots = [];
-        this.lines = [];
+        this.mod_lines = [];
         this.loadModifierLine(c, this.up_angle - Math.PI);
     }
     $.Char.prototype.loadSecondaryVowel = function(circle) {
