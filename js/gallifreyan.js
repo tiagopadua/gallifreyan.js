@@ -5,7 +5,7 @@
     Math.HALFPI = Math.PI / 2;
     Math.THREEQUARTERSPI = Math.PI + Math.HALFPI
 
-    $.draw_guidelines = false;
+    $.draw_guidelines = true;
     $.guideline_color = "#333333";
 
 
@@ -64,6 +64,16 @@
         // Actually draw a circle with almost-zero radius
         var radius = this.line_width / 2.01;
         ctx.arc(this.x, this.y, radius, 0, Math.TWOPI);
+    }
+    $.Point.prototype.moveXY = function(delta_x, delta_y) {
+        this.x += delta_x;
+        this.y += delta_y;
+        return this;
+    }
+    $.Point.prototype.move = function(angle, length) {
+        this.moveXY(Math.cos(angle) * length,
+                    Math.sin(angle) * length);
+        return this;
     }
 
 
@@ -130,6 +140,19 @@
         }
         return default_result;
     }
+    $.Line.prototype.perpendicularMove = function(delta) {
+        if (this.begin.x == this.end.x) {
+            this.begin.y += delta;
+        } else if (this.begin.y == this.end.y) {
+            this.begin.x += delta;
+        } else {
+            var angle = Math.atan2(this.end.y - this.begin.y,
+                                   this.end.x - this.begin.x);
+            this.begin.move(angle + Math.HALFPI, delta);
+            this.end.move(angle + Math.HALFPI, delta);
+        }
+        return this;
+    }
 
 
 /******************************* CIRCLE **************************************/
@@ -158,6 +181,8 @@
 
         if (target.name == 'Circle') {
             return isect_circle_circle(this, target);
+        } else if (target.name == 'Line') {
+            return isect_line_circle(target, this);
         }
         return default_result;
     }
@@ -463,7 +488,7 @@
                 continue;
             }
             if (last_shareable_char) {
-                c.shareModifierLine([last_shareable_char]);
+                c.shareModifierLine(last_shareable_char.mod_lines);
                 last_shareable_char = null;
                 continue;
             }
@@ -498,6 +523,7 @@
         this.setMaxDiameter(max_diameter);
         this.dots = [];
         this.mod_lines = [];
+        this.mod_line2 = null;
     }
     $.Char.prototype.setX = function(new_x) {
         this.x = typeof new_x !== 'undefined' ? new_x : this.radius;
@@ -650,7 +676,10 @@
                 break;
         }
     }
-    $.Char.prototype.loadModifierLine = function(circle, angle) {
+    $.Char.prototype.loadModifierLine = function(circle, angle, is_secondary) {
+        if (typeof(is_secondary) === 'undefined') {
+            is_secondary = false;
+        }
         var l = new $.Line(
             circle.center.x + Math.cos(angle) * circle.radius,
             circle.center.y + Math.sin(angle) * circle.radius,
@@ -660,7 +689,12 @@
         if (p_list.length > 0) {
             l.end = p_list[0];
         }
-        this.mod_lines.push(l);
+        l.holder_circle = circle;
+        if (is_secondary) {
+            this.mod_line2 = l;
+        } else {
+            this.mod_lines.push(l);
+        }
         this.draw_objects.push(l);
     }
     $.Char.prototype.shareModifierLine = function(shared_list) {
@@ -669,23 +703,35 @@
         }
         var already_shared = 0;
         var i = 0;
+        var j = this.mod_lines.length - 1;
         for (i in shared_list) {
             var shared = shared_list[i];
-            if (shared.mod_lines && shared.mod_lines.length <= 0) {
+            if (!shared || (j < 0)) {
                 continue;
             }
 
-            if (this.mod_lines.length == shared.mod_lines.length) {
-                for (j in this.mod_lines) {
-                    var k = shared.mod_lines.length - j - 1;
-                    shared_line = shared.mod_lines[k];
-                    shared_line.visible = false;
+            this_line = this.mod_lines[j];
 
-                    var this_line = this.mod_lines[j];
-                    this_line.end.x = shared_line.begin.x;
-                    this_line.end.y = shared_line.begin.y;
-                }
-            }
+            var axis = new $.Line(this_line.holder_circle.center.x,
+                                  this_line.holder_circle.center.y,
+                                  shared.holder_circle.center.x,
+                                  shared.holder_circle.center.y);
+            var axis_range = Math.min(this_line.holder_circle.radius,
+                                      shared.holder_circle.radius) * .7;
+            var current_delta = (j / (this.mod_lines.length - 1)) * axis_range - (axis_range / 2.0);
+            axis.perpendicularMove(current_delta);
+            var this_isects = axis.intersectPoints(this_line.holder_circle);
+            if (this_isects.length <= 0) { return; }
+            var shared_isects = axis.intersectPoints(shared.holder_circle);
+            if (shared_isects.length <= 0) { return; }
+
+            this_line.begin.x = this_isects[0].x;
+            this_line.begin.y = this_isects[0].y;
+            this_line.end.x = shared_isects[0].x;
+            this_line.end.y = shared_isects[0].y;
+
+            shared.visible = false;
+            --j;
         }
     }
     $.Char.prototype.loadArc = function(modifier, circle) {
@@ -787,7 +833,7 @@
         var c = this.loadE(circle, is_secondary);
         this.dots = [];
         this.mod_lines = [];
-        this.loadModifierLine(c, this.up_angle);
+        this.loadModifierLine(c, this.up_angle, true);
     }
     $.Char.prototype.loadO = function(circle, is_secondary) {
         is_secondary = typeof is_secondary === "boolean" ? is_secondary : false;
@@ -812,7 +858,7 @@
         var c = this.loadE(circle, is_secondary);
         this.dots = [];
         this.mod_lines = [];
-        this.loadModifierLine(c, this.up_angle - Math.PI);
+        this.loadModifierLine(c, this.up_angle - Math.PI, true);
     }
     $.Char.prototype.loadSecondaryVowel = function(circle) {
         if (/^a$/i.test(this.secondary)) {
