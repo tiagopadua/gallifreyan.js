@@ -337,6 +337,7 @@
         }
         if ($.draw_guidelines) {
             this.circle.draw(canvas);
+            this.arcs_circle.draw(canvas);
         }
     }
     $.Word.prototype.setText = function(text) {
@@ -370,10 +371,16 @@
                 var alpha = (Math.TWOPI / this.chars.length) / 2;
                 var sin_alpha = Math.sin(alpha);
 
-                char_max_diameter = 2 * this.radius * sin_alpha / (sin_alpha + 1);
-                this.arcs_circle.radius = this.radius - (char_max_diameter / 2);
+                // value to calculate new word radius
+                char_max_diameter = 2 * this.arcs_circle.radius * Math.sin(alpha);
             
-                this.arcs_circle = this.positionChars(char_max_diameter, true);
+                var new_arcs_circle = this.positionChars(char_max_diameter, true);
+                this.arcs_circle.radius = new_arcs_circle.radius;
+                this.arcs_circle.center.x = new_arcs_circle.center.x;
+                this.arcs_circle.center.y = new_arcs_circle.center.y;
+
+                // final value
+                char_max_diameter = 2 * this.arcs_circle.radius * Math.sin(alpha);
             }
             this.positionChars(char_max_diameter);
             this.shareCharModLines();
@@ -458,7 +465,7 @@
         }
         var new_size_circle = this.arcs_circle;
         if (resize_word_circle) {
-            var new_radius = this.radius;
+            var new_radius = this.radius; // Just a starting value for the algorithm
             for (i in this.chars) {
                 c = this.chars[i];
                 var target_x = new_center.x - c.up_vector.x * this.max_diameter;
