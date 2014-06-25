@@ -5,7 +5,7 @@
     Math.HALFPI = Math.PI / 2;
     Math.THREEQUARTERSPI = Math.PI + Math.HALFPI
 
-    $.draw_guidelines = true;
+    $.draw_guidelines = false;
     $.guideline_color = "#333333";
 
 
@@ -74,6 +74,15 @@
         this.moveXY(Math.cos(angle) * length,
                     Math.sin(angle) * length);
         return this;
+    }
+    $.Point.prototype.isMouseOver = function(mouse_x, mouse_y) {
+        var half_width = this.line_width / 2;
+        if (((mouse_x - half_width) < mouse_x) && ((mouse_x + half_width) > mouse_x)) {
+            if (((mouse_y - half_width) < mouse_y) && ((mouse_y + half_width) > mouse_y)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 
@@ -153,6 +162,15 @@
         }
         return this;
     }
+    $.Line.prototype.isMouseOver = function(mouse_x, mouse_y) {
+        if (mouse_x < Math.min(this.begin.x, this.end.x) && (mouse_y < Math.min(this.begin.y, this.end.y))) {
+            return false;
+        }
+        if (mouse_x > Math.max(this.begin.x, this.end.x) && (mouse_y > Math.max(this.begin.y, this.end.y))) {
+            return false;
+        }
+        return false;
+    }
 
 
 /******************************* CIRCLE **************************************/
@@ -185,6 +203,15 @@
             return isect_line_circle(target, this);
         }
         return default_result;
+    }
+    $.Circle.prototype.isMouseOver = function(mouse_x, mouse_y) {
+        var delta_x = mouse_x - this.center.x;
+        var delta_y = mouse_y - this.center.y;
+        var distance = Math.sqrt(delta_x*delta_x + delta_y*delta_y);
+
+        var half_width = this.line_width / 2;
+        return ( (distance <= (this.radius + half_width)) &&
+                 (distance >= (this.radius - half_width)) );
     }
 
 
@@ -258,6 +285,12 @@
             return true;
         }
         return false;
+    }
+    $.Arc.prototype.isMouseOver = function(mouse_x, mouse_y) {
+        var mouse_angle = Math.atan2(mouse_y, mouse_x);
+        var match_angle = (mouse_angle >= this.begin_angle) && (mouse_angle <= this.end_angle);
+
+        return (this.circle.isMouseOver(mouse_x, mouse_y) && match_angle);
     }
 
 
