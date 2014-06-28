@@ -13,6 +13,8 @@
   <input type="text" placeholder="Type your text to translate" onchange="textChanged(this);" onkeypress="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();"/>
   <a id="download" download="gallifreyan.png"><input type="button" value="Download as PNG"/></a>
   <span id="coords">0x0</span>
+  <br/>
+  <input type="checkbox" id="guidelines">Draw guidelines</input>
   <div class="blueprint">
    <canvas id="canvas" width="500" height="500" class="img-rounded"></canvas>
   </div>
