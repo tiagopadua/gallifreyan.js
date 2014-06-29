@@ -180,12 +180,21 @@
             var b = this.begin.y - a * this.begin.x;
             
             // Mouse perpendicular line parameters
-            var ma = Math.tan(Math.atan(a) + Math.HALFPI);
-            var mb = mouse_y - (ma * mouse_x);
-
-            var intersect_x = (mb - b) / (a - ma); // (a - ma) is never 0
-            var intersect_y = a * intersect_x + b;
-
+            var pa = 0;
+            var pb = 0;
+            var intersect_x = 0;
+            var intersect_y = 0;
+            if (a > .001) {
+                pa = Math.tan(Math.atan(a) + Math.HALFPI);
+                pb = mouse_y - (pa * mouse_x);
+                intersect_x = (pb - b) / (a - pa); // (a - pa) is never 0
+                intersect_y = a * intersect_x + b;
+            } else {
+                pa = a;
+                pb = mouse_x - (pa * mouse_y);
+                intersect_x = (pa*b + pb) / (1 - a*pa);
+                intersect_y = a*intersect_x + b;
+            }
             return (points_distance(mouse_x, mouse_y, intersect_x, intersect_y) <= threshold);
         } else {
             // Main line parameters
@@ -193,22 +202,21 @@
             var b = this.begin.x - a * this.begin.y;
             
             // Mouse perpendicular line parameters
-            var ma = 0;
-            var mb = 0;
+            var pa = 0;
+            var pb = 0;
             var intersect_x = 0;
             var intersect_y = 0;
             if (a > .001) {
-                ma = Math.tan(Math.atan(a) + Math.HALFPI);
-                mb = mouse_x - (ma * mouse_y);
-                intersect_y = (mb - b) / (a - ma); // (a - ma) is never 0
+                pa = Math.tan(Math.atan(a) + Math.HALFPI);
+                pb = mouse_x - (pa * mouse_y);
+                intersect_y = (pb - b) / (a - pa); // (a - pa) is never 0
                 intersect_x = a * intersect_y + b;
             } else {
-                ma = a;
-                mb = mouse_y - (ma * mouse_x);
-                intersect_y = (a*mb + b) / (1 + a*ma);
-                intersect_x = (intersect_y - b) / a;
+                pa = a;
+                pb = mouse_y - (pa * mouse_x);
+                intersect_y = (pa*b + pb) / (1 - a*pa);
+                intersect_x = a*intersect_y + b;
             }
-
             return (points_distance(mouse_x, mouse_y, intersect_x, intersect_y) <= threshold);
         }
         return false;
