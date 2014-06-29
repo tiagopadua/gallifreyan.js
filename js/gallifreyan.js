@@ -791,11 +791,6 @@
         } else {
             this.loadOther();
         }
-
-        // Secondary
-        if (!this.secondary || this.secondary.length <= 0 || this.secondary_count <= 0) {
-            return;
-        }
     }
     SELF.Char.prototype.loadModifier = function(modifier, circle) {
         var distance = 1;
