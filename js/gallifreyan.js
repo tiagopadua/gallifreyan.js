@@ -76,13 +76,18 @@
         return this;
     }
     SELF.Point.prototype.isMouseOver = function(mouse_x, mouse_y) {
-        var half_width = this.line_width / 2;
-        if (((mouse_x - half_width) < mouse_x) && ((mouse_x + half_width) > mouse_x)) {
-            if (((mouse_y - half_width) < mouse_y) && ((mouse_y + half_width) > mouse_y)) {
-                return true;
-            }
+        var threshold = Math.max(5, this.line_width);
+        if ((mouse_x < (this.x - threshold)) ||
+            (mouse_x > (this.x + threshold)) ||
+            (mouse_y < (this.y - threshold)) ||
+            (mouse_y > (this.y + threshold))) {
+            return false;
         }
-        return false;
+        var delta_x = mouse_x - this.x;
+        var delta_y = mouse_y - this.y;
+        var distance = Math.sqrt(delta_x*delta_x + delta_y*delta_y);
+
+        return ( (distance <= threshold) && (distance >= -threshold) );
     }
 
 
