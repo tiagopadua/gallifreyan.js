@@ -22,17 +22,26 @@
  <script type="text/javascript" src="../js/gallifreyan.js"></script>
  <script language="javascript">
 
+var draw_target = document.getElementById("canvas");
 var sentence = new gallifreyan.Sentence('', 20, 20, 460);
 sentence.draw(document.getElementById("canvas"));
 
 function textChanged(obj) {
-    var target = document.getElementById("canvas");
     sentence.setText(obj.value);
-    sentence.draw(target);
+    sentence.draw(draw_target);
 }
 
 document.getElementById('canvas').onmousemove = function(e) {
     document.getElementById('coords').innerText = e.offsetX.toString() + "x" + e.offsetY.toString();
+    var over_objects = sentence.mouseOverObjects(e.offsetX, e.offsetY);
+    sentence.setLineColor("#ffffff");
+    if (over_objects.length > 0) {
+       console.log("MOUSE OVER");
+       for (var i in over_objects) {
+          over_objects[i].line_color = "#ff3311";
+       }
+    }
+    sentence.draw(draw_target);
 };
 
 document.getElementById('download').onclick = function() {
@@ -43,8 +52,7 @@ document.getElementById('download').onclick = function() {
 document.getElementById("guidelines").onchange = function(e){
   if(e) {
     gallifreyan.draw_guidelines = e.target.checked;
-    var target = document.getElementById("canvas");
-    sentence.draw(target)
+    sentence.draw(draw_target)
   }
 };
 
