@@ -423,8 +423,8 @@
                 var word_y = this.center_y + word_center_radius * angle_sin;
 
                 w_object = new SELF.Word(w, word_x, word_y, word_radius * 2);
-
                 this.words.push(w_object);
+
                 current_angle += angle_increment;
             }
         }
@@ -492,7 +492,7 @@
         this.chars = [];
         var last_len = 0;
         var c = null;
-         while ((text.length > 0) && (last_len != text.length)) {
+        while ((text.length > 0) && (last_len != text.length)) {
             c = new SELF.Char(text);
             this.chars.push(c);
             last_len = text.length;
@@ -1125,7 +1125,7 @@
             if (double_consonants.test(d)) {
                 this.main = d;
                 this.main_count = 1;
-            } else if (single_consonants.test(c)) {
+            } else { //if (single_consonants.test(c)) {
                 this.main = c;
                 this.main_count = this.countCharRepeat(text);
             }
