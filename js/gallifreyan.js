@@ -163,11 +163,53 @@
         return this;
     }
     SELF.Line.prototype.isMouseOver = function(mouse_x, mouse_y) {
-        if (mouse_x < Math.min(this.begin.x, this.end.x) && (mouse_y < Math.min(this.begin.y, this.end.y))) {
+        var threshold = Math.max(5, this.line_width / 2);
+        var min_x = Math.min(this.begin.x, this.end.x) - threshold;
+        var min_y = Math.min(this.begin.y, this.end.y) - threshold;
+        var max_x = Math.max(this.begin.x, this.end.x) + threshold;
+        var max_y = Math.max(this.begin.y, this.end.y) + threshold;
+        if ( (mouse_x < min_x) || (mouse_y < min_y) || (mouse_x > max_x) || (mouse_y > max_y) ) {
             return false;
         }
-        if (mouse_x > Math.max(this.begin.x, this.end.x) && (mouse_y > Math.max(this.begin.y, this.end.y))) {
-            return false;
+
+        var dx = this.end.x - this.begin.x;
+        var dy = this.end.y - this.begin.y;
+        if (Math.abs(dx) > .001) {
+            // Main line parameters
+            var a = dy / dx;
+            var b = this.begin.y - a * this.begin.x;
+            
+            // Mouse perpendicular line parameters
+            var ma = Math.tan(Math.atan(a) + Math.HALFPI);
+            var mb = mouse_y - (ma * mouse_x);
+
+            var intersect_x = (mb - b) / (a - ma); // (a - ma) is never 0
+            var intersect_y = a * intersect_x + b;
+
+            return (points_distance(mouse_x, mouse_y, intersect_x, intersect_y) <= threshold);
+        } else {
+            // Main line parameters
+            var a = dx / dy;
+            var b = this.begin.x - a * this.begin.y;
+            
+            // Mouse perpendicular line parameters
+            var ma = 0;
+            var mb = 0;
+            var intersect_x = 0;
+            var intersect_y = 0;
+            if (a > .001) {
+                ma = Math.tan(Math.atan(a) + Math.HALFPI);
+                mb = mouse_x - (ma * mouse_y);
+                intersect_y = (mb - b) / (a - ma); // (a - ma) is never 0
+                intersect_x = a * intersect_y + b;
+            } else {
+                ma = a;
+                mb = mouse_y - (ma * mouse_x);
+                intersect_y = (a*mb + b) / (1 + a*ma);
+                intersect_x = (intersect_y - b) / a;
+            }
+
+            return (points_distance(mouse_x, mouse_y, intersect_x, intersect_y) <= threshold);
         }
         return false;
     }
@@ -209,7 +251,7 @@
         var delta_y = mouse_y - this.center.y;
         var distance = Math.sqrt(delta_x*delta_x + delta_y*delta_y);
 
-        var half_width = Math.max(4, this.line_width / 2);
+        var half_width = Math.max(5, this.line_width / 2);
         return ( (distance <= (this.radius + half_width)) &&
                  (distance >= (this.radius - half_width)) );
     }
@@ -287,16 +329,25 @@
         return false;
     }
     SELF.Arc.prototype.isMouseOver = function(mouse_x, mouse_y) {
+        if (!this.circle.isMouseOver(mouse_x, mouse_y)) {
+            return false;
+        }
         var mouse_angle = Math.atan2(mouse_y - this.circle.center.y, mouse_x - this.circle.center.x);
-        if ((this.end_angle > Math.PI) && (mouse_angle < -Math.PI/2)) {
+
+        var begin_angle = this.begin_angle;
+        var end_angle = this.end_angle;
+        while (begin_angle > end_angle) {
+            begin_angle -= Math.TWOPI;
+        }
+        if ((end_angle > Math.PI) && (mouse_angle < (end_angle-Math.TWOPI))) {
             mouse_angle += Math.TWOPI;
         }
-        if ((this.begin_angle < -Math.PI) && (mouse_angle > Math.PI/2)) {
+        if ((begin_angle < -Math.PI) && (mouse_angle > (begin_angle+Math.TWOPI))) {
             mouse_angle -= Math.TWOPI;
         }
-        var match_angle = (mouse_angle >= this.begin_angle) && (mouse_angle <= this.end_angle);
+        var match_angle = (mouse_angle >= begin_angle) && (mouse_angle <= end_angle);
 
-        return (this.circle.isMouseOver(mouse_x, mouse_y) && match_angle);
+        return match_angle;
     }
 
 
@@ -918,8 +969,8 @@
         this.loadSecondaryVowel(c);
     }
     SELF.Char.prototype.loadT = function(modifier) {
-        var offset_distance = -this.consonant_radius * 2.3;
-        var c = new SELF.Circle(this.x + offset_distance*this.up_vector.x, this.y + offset_distance*this.up_vector.y, this.consonant_radius * 3);
+        var offset_distance = -this.consonant_radius * 2.3; // Magic number
+        var c = new SELF.Circle(this.x + offset_distance*this.up_vector.x, this.y + offset_distance*this.up_vector.y, this.consonant_radius * 3.2);
         this.loadArc(modifier, c);
         this.max_used_word_radius = this.word_circle.radius;
         if (this.main_count > 1) {
@@ -1162,6 +1213,11 @@
             angle -= Math.TWOPI;
         }
         return angle;
+    }
+    function points_distance(x1, y1, x2, y2) {
+        var dx = x2 - x1;
+        var dy = y2 - y1;
+        return Math.sqrt(dx*dx + dy*dy);
     }
 
 

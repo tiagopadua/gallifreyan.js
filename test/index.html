@@ -36,7 +36,6 @@ document.getElementById('canvas').onmousemove = function(e) {
     var over_objects = sentence.mouseOverObjects(e.offsetX, e.offsetY);
     sentence.setLineColor("#ffffff");
     if (over_objects.length > 0) {
-       console.log("MOUSE OVER");
        for (var i in over_objects) {
           over_objects[i].line_color = "#ff3311";
        }
