@@ -6,7 +6,7 @@
     Math.THREEQUARTERSPI = Math.PI + Math.HALFPI
 
     $.draw_guidelines = false;
-    $.guideline_color = "#333333";
+    $.guideline_color = "#999933";
 
 
 /*************************** BASE DRAWING OBJECT *****************************/
@@ -332,11 +332,31 @@
         this.words = [];
         this.text = text.trim();
 
-        word_list = this.text.split(' ');
-        for (i in word_list) {
-            w = word_list[i];
-            w_object = new $.Word(w, this.left + this.size/2, this.top + this.size/2, this.inside_circle.radius * 1.8);
+        var usable_radius = this.inside_circle.radius * .85; // MAGIC NUMBER!
+        var word_list = this.text.split(' ');
+        if (word_list && word_list.length == 1) {
+            w_object = new $.Word(word_list[0], this.center_x, this.center_y, usable_radius * 2);
             this.words.push(w_object);
+        } else {
+            var angle_increment = -Math.TWOPI / word_list.length;
+            var current_angle = Math.PI / 2;
+
+            var sin_angle2 = Math.abs(Math.sin(angle_increment/2));
+            var word_radius = usable_radius * sin_angle2 / (1 + sin_angle2);
+            var word_center_radius = usable_radius - word_radius;
+            for (i in word_list) {
+                w = word_list[i];
+
+                var angle_sin = Math.sin(current_angle);
+                var angle_cos = Math.cos(current_angle);
+                var word_x = this.center_x + word_center_radius * angle_cos;
+                var word_y = this.center_y + word_center_radius * angle_sin;
+
+                w_object = new $.Word(w, word_x, word_y, word_radius * 2);
+
+                this.words.push(w_object);
+                current_angle += angle_increment;
+            }
         }
     }
 
@@ -512,7 +532,7 @@
                     var p = isect_points[0];
                     var dx = p.x - new_center.x;
                     var dy = p.y - new_center.y;
-                    var char_new_max_radius = Math.sqrt(dx*dx + dy*dy);
+                    var char_new_max_radius = Math.sqrt(dx*dx + dy*dy) * .94;
                     char_new_max_radius -= c.max_used_word_radius - this.arcs_circle.radius;
                     new_radius = Math.min(new_radius, char_new_max_radius);
                 }

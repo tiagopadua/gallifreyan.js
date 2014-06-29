@@ -10,11 +10,11 @@
 
 <body>
  <div class="container" id="mainContainer">
-  <input type="text" placeholder="Type your text to translate" onchange="textChanged(this);" onkeypress="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();"/>
+  <input type="text" placeholder="Type your text to translate" onchange="textChanged(this);" onkeypress="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();" style="margin-bottom:0px;"/>
   <a id="download" download="gallifreyan.png"><input type="button" value="Download as PNG"/></a>
   <span id="coords">0x0</span>
   <br/>
-  <input type="checkbox" id="guidelines" for="guidelines">Draw guidelines</input>
+  <input type="checkbox" id="guidelines">Draw guidelines</input>
   <div class="blueprint">
    <canvas id="canvas" width="500" height="500" class="img-rounded"></canvas>
   </div>
@@ -52,4 +52,3 @@ document.getElementById("guidelines").onchange = function(e){
 </body>
 
 </html>
-
