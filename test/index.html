@@ -14,7 +14,7 @@
   <a id="download" download="gallifreyan.png"><input type="button" value="Download as PNG"/></a>
   <span id="coords">0x0</span>
   <br/>
-  <input type="checkbox" id="guidelines">Draw guidelines</input>
+  <input type="checkbox" id="guidelines" for="guidelines">Draw guidelines</input>
   <div class="blueprint">
    <canvas id="canvas" width="500" height="500" class="img-rounded"></canvas>
   </div>
@@ -38,7 +38,15 @@ document.getElementById('canvas').onmousemove = function(e) {
 document.getElementById('download').onclick = function() {
     var canvas = document.getElementById("canvas");
     this.href = canvas.toDataURL("image/png");
-}
+};
+
+document.getElementById("guidelines").onchange = function(e){
+  if(e) {
+    gallifreyan.draw_guidelines = e.target.checked;
+    var target = document.getElementById("canvas");
+    sentence.draw(target)
+  }
+};
 
  </script>
 </body>
