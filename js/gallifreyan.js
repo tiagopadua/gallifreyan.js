@@ -434,7 +434,7 @@
     }
     SELF.Sentence.prototype.preprocessText = function(text) {
         var valid_chars = /[a-z ]/i;
-        var vowels = /[aeiou]/i;
+        var e_or_i = /[ei]/i;
         var final_text = '';
         for (var i=0; i<text.length; ++i) {
             var c = text[i];
@@ -444,8 +444,19 @@
             if (c == 'c') {
                 if (text.length > (i+1)) {
                     var next = text[i+1];
-                    if (vowels.test(next)) {
+                    if (e_or_i.test(next)) {
                         final_text += 's';
+                    } else {
+                        final_text += 'k';
+                    }
+                } else {
+                    final_text += 'k';
+                }
+            } else if (c == 'q') {
+                if (text.length > (i+1)) {
+                    var next = text[i+1];
+                    if (next == 'u') {
+                        final_text += 'q';
                     } else {
                         final_text += 'k';
                     }
