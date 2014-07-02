@@ -13,7 +13,8 @@
     SELF.Graphic = function(targetCanvas) {
         this.name = "Graphic";
         this.canvas = typeof targetCanvas !== 'undefined' ? targetCanvas : null;
-        this.line_color = "#ffffff";
+        //this.line_color = "#ffffff";
+        this.line_color = "#f0cc05";
         //this.line_color = "#87b8e7";
         this.line_width = 2;
         this.visible = true;
@@ -373,7 +374,8 @@
         this.center_x = this.left + this.size/2;
         this.center_y = this.top + this.size/2;
         this.outside_circle = new SELF.Circle(this.center_x, this.center_y, this.size/2);
-        this.inside_circle = new SELF.Circle(this.center_x, this.center_y, this.size/2-6);
+        this.outside_circle.line_width *= 1.4;
+        this.inside_circle = new SELF.Circle(this.center_x, this.center_y, this.size/2-8);
         this.words = [];
         this.setText(text);
     }
@@ -383,7 +385,8 @@
         context.clearRect(0, 0, canvas.width, canvas.height);
         var background = context.createLinearGradient(0, 0, canvas.width, canvas.height);
         background.addColorStop(0, '#00345c');
-        background.addColorStop(1, '#001940');
+        //background.addColorStop(1, '#001940');
+        background.addColorStop(1, '#00112b');
         context.fillStyle = background;
         context.fillRect(0, 0, canvas.width, canvas.height);
         var i = null;
@@ -400,7 +403,7 @@
         var w = null;
         var w_object = null;
         this.words = [];
-        this.text = text.trim();
+        this.text = this.preprocessText(text.trim());
 
         var usable_radius = this.inside_circle.radius * .95; // MAGIC NUMBER!
         var word_list = this.text.split(' ');
@@ -428,6 +431,32 @@
                 current_angle += angle_increment;
             }
         }
+    }
+    SELF.Sentence.prototype.preprocessText = function(text) {
+        var valid_chars = /[a-z ]/i;
+        var vowels = /[aeiou]/i;
+        var final_text = '';
+        for (var i=0; i<text.length; ++i) {
+            var c = text[i];
+            if (!valid_chars.test(c)) {
+                continue;
+            }
+            if (c == 'c') {
+                if (text.length > (i+1)) {
+                    var next = text[i+1];
+                    if (vowels.test(next)) {
+                        final_text += 's';
+                    } else {
+                        final_text += 'k';
+                    }
+                } else {
+                    final_text += 'k';
+                }
+            } else {
+                final_text += c;
+            }
+        }
+        return final_text;
     }
     SELF.Sentence.prototype.mouseOverObjects = function(mouse_x, mouse_y) {
         var object_list = [];
@@ -679,6 +708,16 @@
         }
         for (var i in this.chars) {
             this.chars[i].setLineColor(new_color);
+        }
+    }
+
+
+/********************************* MOD LINES *********************************/
+    SELF.ModLines = function(holder_char, count) {
+        this.holder_char = holder_char;
+        this.lines = [];
+        for (var i=0; i<count; ++i) {
+            this.lines.push(new SELF.Line());
         }
     }
 
