@@ -11,7 +11,8 @@
 <body>
  <div class="container" id="mainContainer">
   <input type="text" placeholder="Type your text to translate" onchange="textChanged(this);" onkeypress="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();" style="margin-bottom:0px;"/>
-  <a id="download" download="gallifreyan.png"><input type="button" value="Download as PNG"/></a>
+  <a id="download_png" download="gallifreyan.png"><input type="button" value="Download as PNG"/></a>
+  <a id="download_jpg" download="gallifreyan.jpg"><input type="button" value="Download as JPEG"/></a>
   <span id="coords">0x0</span>
   <br/>
   <input type="checkbox" id="guidelines">Draw guidelines</input>
@@ -34,7 +35,8 @@ function textChanged(obj) {
 document.getElementById('canvas').onmousemove = function(e) {
     document.getElementById('coords').innerText = e.offsetX.toString() + "x" + e.offsetY.toString();
     var over_objects = sentence.mouseOverObjects(e.offsetX, e.offsetY);
-    sentence.setLineColor("#ffffff");
+    //sentence.setLineColor("#ffffff");
+    sentence.setLineColor("#f0cc05");
     if (over_objects.length > 0) {
        for (var i in over_objects) {
           over_objects[i].line_color = "#ff4444";
@@ -43,9 +45,13 @@ document.getElementById('canvas').onmousemove = function(e) {
     sentence.draw(draw_target);
 };
 
-document.getElementById('download').onclick = function() {
+document.getElementById('download_png').onclick = function() {
     var canvas = document.getElementById("canvas");
     this.href = canvas.toDataURL("image/png");
+};
+document.getElementById('download_jpg').onclick = function() {
+    var canvas = document.getElementById("canvas");
+    this.href = canvas.toDataURL("image/jpeg");
 };
 
 document.getElementById("guidelines").onchange = function(e){
