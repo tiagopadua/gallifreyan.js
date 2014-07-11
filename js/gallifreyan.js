@@ -375,7 +375,7 @@
         this.center_y = this.top + this.size/2;
         this.outside_circle = new SELF.Circle(this.center_x, this.center_y, this.size/2);
         this.outside_circle.line_width *= 1.4;
-        this.inside_circle = new SELF.Circle(this.center_x, this.center_y, this.size/2-8);
+        this.inside_circle = new SELF.Circle(this.center_x, this.center_y, this.size/2-6);
         this.words = [];
         this.setText(text);
     }
@@ -408,7 +408,7 @@
         var usable_radius = this.inside_circle.radius * .95; // MAGIC NUMBER!
         var word_list = this.text.split(' ');
         if (word_list && word_list.length == 1) {
-            w_object = new SELF.Word(word_list[0], this.center_x, this.center_y, usable_radius * 2);
+            w_object = new SELF.Word(word_list[0], this.center_x, this.center_y, usable_radius * 2, this.inside_circle);
             this.words.push(w_object);
         } else {
             var angle_increment = -Math.TWOPI / word_list.length;
@@ -425,7 +425,7 @@
                 var word_x = this.center_x + word_center_radius * angle_cos;
                 var word_y = this.center_y + word_center_radius * angle_sin;
 
-                w_object = new SELF.Word(w, word_x, word_y, word_radius * 2);
+                w_object = new SELF.Word(w, word_x, word_y, word_radius * 2, this.inside_circle);
                 this.words.push(w_object);
 
                 current_angle += angle_increment;
@@ -496,7 +496,7 @@
 
 
 /*********************************** WORD ************************************/
-    SELF.Word = function(text, center_x, center_y, max_diameter) {
+    SELF.Word = function(text, center_x, center_y, max_diameter, sentence_circle) {
         this.max_diameter = typeof max_diameter !== 'undefined' ? max_diameter : 250;
         this.radius = this.max_diameter / 2;
         this.x = typeof center_x !== 'undefined' ? center_x : this.radius;
@@ -504,6 +504,7 @@
         this.circle = new SELF.Circle(this.x, this.y, this.radius);
         this.circle.line_color = SELF.guideline_color;
         this.circle.line_width = 1;
+        this.sentence_circle = typeof sentence_circle !== 'undefined' ? sentence_circle : this.circle;
         this.arcs_circle = new SELF.Circle(this.x, this.y, this.radius);
         this.arcs_circle.line_color = SELF.guideline_color;
         this.arcs_circle.line_width = 1;
@@ -573,7 +574,7 @@
                 }
             }
             this.positionChars(char_max_diameter);
-            this.shareCharModLines();
+            //this.shareCharModLines();
         }
     }
     SELF.Word.prototype.positionChars = function(char_max_diameter, resize_word_circle) {
@@ -591,6 +592,7 @@
         var new_center = new SELF.Point(this.arcs_circle.center.x, this.arcs_circle.center.y);
         for (i in this.chars) {
             var c = this.chars[i];
+            c.sentence_circle = this.sentence_circle;
             c.up_angle = current_angle + Math.PI;
             c.up_vector = new SELF.Point(Math.cos(c.up_angle), Math.sin(c.up_angle));
             c.word_circle = this.arcs_circle;
@@ -723,20 +725,10 @@
     }
 
 
-/********************************* MOD LINES *********************************/
-    SELF.ModLines = function(holder_char, count) {
-        this.holder_char = holder_char;
-        this.lines = [];
-        for (var i=0; i<count; ++i) {
-            this.lines.push(new SELF.Line());
-        }
-    }
-
-
-/*********************************** CHAR ************************************/
+/********************************** CHAR *************************************/
 // This can be a single character, repeated "n" times and/or followed by
 // a vowel (which could also be repeated "n" times)
-    SELF.Char = function(text, center_x, center_y, max_diameter, up_vector, owner_circle) {
+    SELF.Char = function(text, center_x, center_y, max_diameter, up_vector, word_circle, sentence_circle) {
         this.draw_objects = [];
         this.max_circle = null;
         this.owner_intersect_object = null;
@@ -744,7 +736,8 @@
         this.y = typeof center_y !== 'undefined' ? center_y : this.radius;
         this.up_angle = -Math.HALFPI;
         this.up_vector = typeof up_vector !== 'undefined' ? up_vector : new SELF.Point(0, -1);
-        this.word_circle = typeof owner_circle !== 'undefined' ? owner_circle : new SELF.Circle(0, 0, 1);
+        this.word_circle = typeof word_circle !== 'undefined' ? word_circle : new SELF.Circle(0, 0, 1);
+        this.sentence_circle = typeof sentence_circle !== 'undefined' ? sentence_circle : this.word_circle;
         this.word_intersect_points = [];
         this.main = "";
         this.main_count = 0;
@@ -755,6 +748,8 @@
         this.max_used_word_radius = this.word_circle.radius + this.radius;
         this.setMaxDiameter(max_diameter);
         this.dots = [];
+        this.main_mod = null;
+        this.secondary_mod = null;
         this.mod_lines = [];
         this.mod_line_secondary = null;
     }
@@ -842,7 +837,7 @@
             this.loadOther();
         }
     }
-    SELF.Char.prototype.loadModifier = function(modifier, circle) {
+    SELF.Char.prototype.loadModifier = function(modifier, circle, min_angle, max_angle) {
         var distance = 1;
         var small_dot_size = this.consonant_radius * .07;
         var big_dot_size = this.consonant_radius * .10;
@@ -887,20 +882,23 @@
                 this.draw_objects.push(p2);
                 break;
             case '2lines':
-                var l1_angle = (this.up_angle * angle_ratio - big_dot_size / 2) / angle_ratio;
-                this.loadModifierLine(circle, l1_angle);
-                var l2_angle = (this.up_angle * angle_ratio + big_dot_size / 2) / angle_ratio;
-                this.loadModifierLine(circle, l2_angle);
+                var angles = randomize_angles(2, min_angle, max_angle);
+                //var l1_angle = (this.up_angle * angle_ratio - big_dot_size / 2) / angle_ratio;
+                this.loadModifierLine(circle, angles[0]);
+                //var l2_angle = (this.up_angle * angle_ratio + big_dot_size / 2) / angle_ratio;
+                this.loadModifierLine(circle, angles[1]);
                 break;
             case '3lines':
-                var l3_angle = (this.up_angle * angle_ratio - big_dot_size) / angle_ratio;
-                var l2_angle = (this.up_angle * angle_ratio + big_dot_size) / angle_ratio;
-                this.loadModifierLine(circle, l3_angle);
-                this.loadModifierLine(circle, this.up_angle);
-                this.loadModifierLine(circle, l2_angle);
+                var angles = randomize_angles(3, min_angle, max_angle);
+                //var l3_angle = (this.up_angle * angle_ratio - big_dot_size) / angle_ratio;
+                //var l2_angle = (this.up_angle * angle_ratio + big_dot_size) / angle_ratio;
+                this.loadModifierLine(circle, angles[0]);
+                this.loadModifierLine(circle, angles[1]); //this.up_angle);
+                this.loadModifierLine(circle, angles[2]); //l2_angle);
                 break;
             case '1line':
-                this.loadModifierLine(circle, this.up_angle);
+                var angles = randomize_angles(1, min_angle, max_angle);
+                this.loadModifierLine(circle, angles[0]); //this.up_angle);
                 break;
         }
     }
@@ -909,11 +907,11 @@
             is_secondary = false;
         }
         var l = new SELF.Line(
-            circle.center.x + Math.cos(angle) * circle.radius,
-            circle.center.y + Math.sin(angle) * circle.radius,
-            circle.center.x + Math.cos(angle) * this.word_circle.radius * 3,
-            circle.center.y + Math.sin(angle) * this.word_circle.radius * 3);
-        var p_list = l.intersectPoints(this.word_circle);
+            circle.center.x + Math.cos(angle) * (circle.radius + circle.line_width/2),
+            circle.center.y + Math.sin(angle) * (circle.radius + circle.line_width/2),
+            circle.center.x + Math.cos(angle) * this.sentence_circle.radius * 2,
+            circle.center.y + Math.sin(angle) * this.sentence_circle.radius * 2);
+        var p_list = l.intersectPoints(this.sentence_circle);
         if (p_list.length > 0) {
             l.end = p_list[0];
         }
@@ -941,9 +939,9 @@
             this_line = this.mod_lines[j];
 
             var axis = new SELF.Line(this_line.holder_circle.center.x,
-                                  this_line.holder_circle.center.y,
-                                  shared.holder_circle.center.x,
-                                  shared.holder_circle.center.y);
+                                     this_line.holder_circle.center.y,
+                                     shared.holder_circle.center.x,
+                                     shared.holder_circle.center.y);
             var axis_range = Math.min(this_line.holder_circle.radius,
                                       shared.holder_circle.radius) * .7;
             var current_delta = (j / (this.mod_lines.length - 1)) * axis_range - (axis_range / 2.0);
@@ -991,7 +989,12 @@
         a.end_angle = arc_end;
         this.draw_objects.push(a);
 
-        this.loadModifier(modifier, circle);
+        while (arc_end < arc_begin) {
+            arc_end += Math.TWOPI;
+        }
+        var angle_delta = Math.min(Math.PI/4, (arc_end - arc_begin)/2.5);
+
+        this.loadModifier(modifier, circle, this.up_angle - angle_delta, this.up_angle + angle_delta);
     }
     SELF.Char.prototype.loadB = function(modifier) {
         var offset_distance = this.consonant_radius * .9;
@@ -1014,7 +1017,8 @@
         var c = new SELF.Circle(this.x + offset_distance*this.up_vector.x, this.y + offset_distance*this.up_vector.y, this.consonant_radius);
         this.owner_intersect_object = c;
         this.draw_objects.push(c);
-        this.loadModifier(modifier, c);
+        var angle_delta = Math.PI / 4;  // 45 degrees
+        this.loadModifier(modifier, c, this.up_angle - angle_delta, this.up_angle + angle_delta);
         this.max_used_word_radius = this.word_circle.radius;
         if (this.main_count > 1) {
             var current_radius = c.radius;
@@ -1044,7 +1048,8 @@
     SELF.Char.prototype.loadTH = function(modifier) {
         var c = new SELF.Circle(this.x, this.y, this.consonant_radius);
         this.draw_objects.push(c);
-        this.loadModifier(modifier, c);
+        var angle_delta = Math.PI / 3;  // 60 degrees
+        this.loadModifier(modifier, c, this.up_angle - angle_delta, this.up_angle + angle_delta);
         this.max_used_word_radius = this.word_circle.radius + this.consonant_radius;
         this.loadSecondaryVowel(c);
     }
@@ -1107,7 +1112,9 @@
         var c = this.loadE(circle, is_secondary);
         this.dots = [];
         this.mod_lines = [];
-        this.loadModifierLine(c, this.up_angle, true);
+        var angle_delta = Math.PI / 12;  // 15 degrees
+        var angles = randomize_angles(1, this.up_angle - angle_delta, this.up_angle + angle_delta);
+        this.loadModifierLine(c, angles[0], true);  // this.up_angle, true);
     }
     SELF.Char.prototype.loadO = function(circle, is_secondary) {
         is_secondary = typeof is_secondary === "boolean" ? is_secondary : false;
@@ -1133,7 +1140,9 @@
         var c = this.loadE(circle, is_secondary);
         this.dots = [];
         this.mod_lines = [];
-        this.loadModifierLine(c, this.up_angle - Math.PI, true);
+        var angle_delta = Math.PI / 12;  // 15 degrees
+        var angles = randomize_angles(1, this.up_angle + Math.PI - angle_delta, this.up_angle + Math.PI + angle_delta);
+        this.loadModifierLine(c, angles[0], true);  //this.up_angle - Math.PI, true);
     }
     SELF.Char.prototype.loadSecondaryVowel = function(circle) {
         if (/^a$/i.test(this.secondary)) {
@@ -1276,6 +1285,32 @@
         var dx = x2 - x1;
         var dy = y2 - y1;
         return Math.sqrt(dx*dx + dy*dy);
+    }
+    // Kind of randomize the angles in certain intervals
+    function randomize_angles(count, min_angle, max_angle) {
+        var angles = [];
+        if (typeof(count) === "undefined" || count <= 0) {
+            return angles;
+        }
+        var min_angle = typeof(min_angle) === "undefined" ? 0 : min_angle;
+        var max_angle = typeof(max_angle) === "undefined" ? Math.TWOPI : max_angle;
+        if (min_angle > max_angle) {
+            min_angle -= Math.TWOPI;
+        }
+        var range = max_angle - min_angle;
+        var i = 0;
+        var total_slots = count * 3;
+        var slots = [];
+        var slot_step = range / (total_slots - 1);
+        for (i = min_angle; i <= max_angle; i += slot_step) {
+            slots.push(i);
+        }
+        for (i = 0; i < count; ++i) {
+            var slot_id = Math.floor(Math.random() * slots.length);
+            angles.push(slots[slot_id]);
+            slots.splice(slot_id, 1);
+        }
+        return angles;
     }
 
 
