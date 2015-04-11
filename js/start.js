@@ -1,9 +1,9 @@
-// Organize everything in the object 'gallifreyan', and inside an anonymous function
-(function(SELF, undefined) {
+// Organize everything in the object 'gallifreyan'
+window.gallifreyan = window.gallifreyan || {};
 
-    Math.TWOPI = 2 * Math.PI;
-    Math.HALFPI = Math.PI / 2;
-    Math.THREEQUARTERSPI = Math.PI + Math.HALFPI
+Math.TWOPI = 2 * Math.PI;
+Math.HALFPI = Math.PI / 2;
+Math.THREEQUARTERSPI = Math.PI + Math.HALFPI
 
-    SELF.draw_guidelines = false;
-    SELF.guideline_color = "#999933";
+window.gallifreyan.draw_guidelines = false;
+window.gallifreyan.guideline_color = "#000000";
