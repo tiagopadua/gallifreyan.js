@@ -96,15 +96,15 @@ window.gallifreyan.Line.prototype.isMouseOver = function(mouse_x, mouse_y) {
         var pb = 0;
         var intersect_x = 0;
         var intersect_y = 0;
-        if (a > .001) {
+        if (a > .001 || a < -.001) {
             pa = Math.tan(Math.atan(a) + Math.HALFPI);
             pb = mouse_y - (pa * mouse_x);
-            intersect_x = (pb - b) / (a - pa); // (a - pa) is never 0
+            intersect_x = (pb - b) / (a - pa);  // (a - pa) is never 0
             intersect_y = a * intersect_x + b;
         } else {
             pa = a;
             pb = mouse_x - (pa * mouse_y);
-            intersect_x = (pa*b + pb) / (1 - a*pa);
+            intersect_x = (pa*b + pb) / (1 - a*pa);  // (a*pa) should never be 1, at this point
             intersect_y = a*intersect_x + b;
         }
         return (window.gallifreyan.util.points_distance(mouse_x, mouse_y, intersect_x, intersect_y) <= threshold);
@@ -118,7 +118,7 @@ window.gallifreyan.Line.prototype.isMouseOver = function(mouse_x, mouse_y) {
         var pb = 0;
         var intersect_x = 0;
         var intersect_y = 0;
-        if (a > .001) {
+        if (a > .001 || a < -.001) {
             pa = Math.tan(Math.atan(a) + Math.HALFPI);
             pb = mouse_x - (pa * mouse_y);
             intersect_y = (pb - b) / (a - pa); // (a - pa) is never 0
