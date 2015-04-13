@@ -189,6 +189,7 @@ window.gallifreyan.Char.prototype.loadModifierLine = function(circle, angle, is_
         l.end = p_list[0];
     }
     l.holder_circle = circle;
+    l.holder_char = this;
     if (is_secondary) {
         this.mod_line_secondary = l;
     } else {
@@ -196,42 +197,82 @@ window.gallifreyan.Char.prototype.loadModifierLine = function(circle, angle, is_
     }
     this.draw_objects.push(l);
 }
-window.gallifreyan.Char.prototype.shareModifierLine = function(shared_list) {
-    if (this.mod_lines && this.mod_lines.length <= 0) {
-        return;
-    }
-    var already_shared = 0;
+window.gallifreyan.Char.prototype.clearSharedLines = function() {
     var i = 0;
-    var j = this.mod_lines.length - 1;
-    for (i in shared_list) {
-        var shared = shared_list[i];
-        if (!shared || (j < 0)) {
+    for (i in this.mod_lines) {
+        this.mod_lines[i].shared = false;
+        this.mod_lines[i].visible = true;
+    }
+    if (this.mod_line_secondary) {
+        this.mod_line_secondary.shared = false;
+        this.mod_line_secondary.visible = true;
+    }
+}
+// Returns a boolean informing if shared everything or not
+window.gallifreyan.Char.prototype.shareModLines = function(shared_char) {
+    if (!this.mod_lines || this.mod_lines.length <= 0 || !shared_char.mod_lines || shared_char.mod_lines.length <= 0) {
+        return false;
+    }
+
+    var angle_share_threshold = Math.HALFPI - .3; // .3 just to add a margin
+    var this_max_angle = this.up_angle + angle_share_threshold;
+    var this_min_angle = this.up_angle - angle_share_threshold;
+
+    for (var i = 0; i < this.mod_lines.length; ++i) {
+        var s1 = this.mod_lines[i];
+        if (s1.shared) {
             continue;
         }
 
-        this_line = this.mod_lines[j];
+        for (var j = 0; j < shared_char.mod_lines.length; ++j) {
+            var s2 = shared_char.mod_lines[j];
+            if (s2.shared) {
+                continue;
+            }
 
-        var axis = new window.gallifreyan.Line(this_line.holder_circle.center.x,
-                                               this_line.holder_circle.center.y,
-                                               shared.holder_circle.center.x,
-                                               shared.holder_circle.center.y);
-        var axis_range = Math.min(this_line.holder_circle.radius,
-                                  shared.holder_circle.radius) * .7;
-        var current_delta = (j / (this.mod_lines.length - 1)) * axis_range - (axis_range / 2.0);
-        axis.perpendicularMove(current_delta);
-        var this_isects = axis.intersectPoints(this_line.holder_circle);
-        if (this_isects.length <= 0) { return; }
-        var shared_isects = axis.intersectPoints(shared.holder_circle);
-        if (shared_isects.length <= 0) { return; }
+            // Check if the current char can line up to the potential target
+            var angle_chars = window.gallifreyan.util.angle_between_points(this.x, this.y, shared_char.x, shared_char.y);
+            if (angle_chars < this_min_angle || angle_chars > this_max_angle) {
+                continue; 
+            }
 
-        this_line.begin.x = this_isects[0].x;
-        this_line.begin.y = this_isects[0].y;
-        this_line.end.x = shared_isects[0].x;
-        this_line.end.y = shared_isects[0].y;
-
-        shared.visible = false;
-        --j;
+            // Now check if the char candidate can line up to the current
+            var target_max_angle = shared_char.up_angle + angle_share_threshold;
+            var target_min_angle = shared_char.up_angle - angle_share_threshold;
+            angle_chars = window.gallifreyan.util.angle_between_points(shared_char.x, shared_char.y, this.x, this.y);
+            if (angle_chars < target_min_angle || angle_chars > target_max_angle) {
+                continue; 
+            }
+ 
+            this.shareLine(s1, s2);
+            break;
+        }
+        if (!s1.shared) {
+            return false;
+        }
     }
+
+    return true;
+}
+window.gallifreyan.Char.prototype.shareLine = function(this_line, shared_line) {
+    var guide_line = new window.gallifreyan.Line(this_line.holder_circle.center.x,
+                                                 this_line.holder_circle.center.y,
+                                                 shared_line.holder_circle.center.x,
+                                                 shared_line.holder_circle.center.y);
+
+    var isect1 = guide_line.intersectPoints(this_line.holder_circle)[0];
+    var isect2 = guide_line.intersectPoints(shared_line.holder_circle)[0];
+
+    this_line.begin.x = shared_line.begin.x = isect1.x;
+    this_line.begin.y = shared_line.begin.x = isect1.y;
+    this_line.end.x = shared_line.end.x = isect2.x;
+    this_line.end.y = shared_line.end.x = isect2.y;
+
+    // Set up info to know the line is shared
+    shared_line.shared = this_line.shared = true;
+    shared_line.visible = false;
+    this_line.shared_line = shared_line;
+    shared_line.shared_line = this_line;
 }
 window.gallifreyan.Char.prototype.loadArc = function(modifier, circle, skip_intersect_points) {
     // Check intersection points to discover the angles for the arc
@@ -239,14 +280,15 @@ window.gallifreyan.Char.prototype.loadArc = function(modifier, circle, skip_inte
     var arc_end = Math.TWOPI;
     var set_intersect_points = skip_intersect_points ? false : true;
 
-    // I don't know why the points always comes on the correct order to draw the circle
-    // Maybe on other browsers it doesn't work. TODO: check it out
+    // I'm not sure why the points always comes on the correct order to draw the arc
+    // Maybe on other browsers it doesn't work.
+    //  *** TODO: check it out
     var isects = circle.intersectPoints(this.word_circle);
     if (isects.length == 2) {
-        var first_angle = Math.atan2(isects[0].y - circle.center.y, isects[0].x - circle.center.x);
-        var second_angle = Math.atan2(isects[1].y - circle.center.y, isects[1].x - circle.center.x);
-        arc_begin = first_angle;
-        arc_end = second_angle;
+        this.first_angle = Math.atan2(isects[0].y - circle.center.y, isects[0].x - circle.center.x);
+        this.second_angle = Math.atan2(isects[1].y - circle.center.y, isects[1].x - circle.center.x);
+        arc_begin = this.first_angle;
+        arc_end = this.second_angle;
         if (set_intersect_points) {
             this.word_intersect_points = [ isects[0], isects[1] ];
         }

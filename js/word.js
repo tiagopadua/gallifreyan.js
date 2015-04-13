@@ -180,23 +180,6 @@ window.gallifreyan.Word.prototype.positionChars = function(char_max_diameter, re
     }
     return new_size_circle;
 }
-window.gallifreyan.Word.prototype.shareCharModLines = function() {
-    var i = 0;
-    var total_lines = 0;
-    var last_shareable_char = null;
-    for (i in this.chars) {
-        var c = this.chars[i];
-        if (c.mod_lines && c.mod_lines.length <= 0) {
-            continue;
-        }
-        if (last_shareable_char) {
-            c.shareModifierLine(last_shareable_char.mod_lines);
-            last_shareable_char = null;
-            continue;
-        }
-        last_shareable_char = c;
-    }
-}
 window.gallifreyan.Word.prototype.addArc = function(begin_angle, end_angle) {
     this.arcs.push(new window.gallifreyan.Arc(this.arcs_circle.center.x, this.arcs_circle.center.y, this.arcs_circle.radius, begin_angle, end_angle));
 }

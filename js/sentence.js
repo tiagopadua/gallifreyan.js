@@ -64,6 +64,7 @@ window.gallifreyan.Sentence.prototype.setText = function(text) {
             current_angle += angle_increment;
         }
     }
+    this.shareModLines();
 }
 window.gallifreyan.Sentence.prototype.preprocessText = function(text) {
     var valid_chars = /[a-z ]/i;
@@ -101,6 +102,30 @@ window.gallifreyan.Sentence.prototype.preprocessText = function(text) {
         }
     }
     return final_text;
+}
+window.gallifreyan.Sentence.prototype.shareModLines = function() {
+    var mod_lines = [];
+    var all_chars = [];
+
+    for (var i = 0; i < this.words.length; ++i) {
+        var w = this.words[i];
+        for (var j = 0; j < w.chars.length; ++j) {
+            var c = w.chars[j];
+            c.clearSharedLines();
+            all_chars.push(c);
+        }
+    }
+
+    for (var i = 0; i < all_chars.length; ++i) {
+        var c = all_chars[i];
+        for (var j = i + 1; j < all_chars.length; ++j) {
+            var c2 = all_chars[j];
+            if (c.shareModLines(c2)) {
+                break;
+            }
+            // else continue searching
+        }
+    }
 }
 window.gallifreyan.Sentence.prototype.mouseOverObjects = function(mouse_x, mouse_y) {
     var object_list = [];
