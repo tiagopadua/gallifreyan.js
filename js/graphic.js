@@ -24,7 +24,7 @@ window.gallifreyan.Graphic.prototype.draw = function(canvas) {
     if ((typeof this.canvas === 'undefined') || (this.canvas === null)) {
         return;
     }
-    context = this.canvas.getContext("2d");
+    var context = this.canvas.getContext("2d");
     //context.shadowBlur = 5;
     //context.shadowColor = "rgba(255,255,0,.4)";
     //context.shadowColor = "rgba(60,180,220,.4)";

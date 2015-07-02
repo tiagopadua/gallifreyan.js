@@ -1,6 +1,6 @@
 /***************************** INTERSECTIONS *********************************/
 window.gallifreyan.util.isect_line_circle = function(line, circle) {
-    default_result = [];
+    var default_result = [];
 
     // Line: y = ax + b
     // Circle: (x − p)^2 + (y − q)^2 = r^2
@@ -59,7 +59,7 @@ window.gallifreyan.util.isect_line_circle = function(line, circle) {
 }
 
 window.gallifreyan.util.isect_circle_circle = function(circle1, circle2) {
-    default_result = [];
+    var default_result = [];
 
     if (!circle1 || !circle2) {
         return default_result;

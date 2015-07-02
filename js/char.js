@@ -111,7 +111,6 @@ window.gallifreyan.Char.prototype.loadObjects = function() {
     }
 }
 window.gallifreyan.Char.prototype.loadModifier = function(modifier, circle, min_angle, max_angle) {
-    var distance = 1;
     var small_dot_size = this.consonant_radius * .07;
     var big_dot_size = this.consonant_radius * .10;
     var angle_ratio = circle.radius / Math.PI;
@@ -488,7 +487,7 @@ window.gallifreyan.Char.prototype.getFirstChar = function(text) {
     }
 
     var vowels = /^[aeiou]/i;
-    var single_consonants = /^[bcdfghjklmnprstvwxyz]/i;
+    //var single_consonants = /^[bcdfghjklmnprstvwxyz]/i;
     var double_consonants = /^(th|ch|sh|ng|qu)/i;
     var c = text[0];
     if (vowels.test(c)) {

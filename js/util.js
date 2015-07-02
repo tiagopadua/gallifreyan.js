@@ -7,9 +7,9 @@ window.gallifreyan.util = {
             if (delta < 0) {
                 return [];
             }
-            sqrt_delta = Math.sqrt(delta);
-            r1 = (-B + sqrt_delta) / (2*A);
-            r2 = (-B - sqrt_delta) / (2*A);
+            var sqrt_delta = Math.sqrt(delta);
+            var r1 = (-B + sqrt_delta) / (2*A);
+            var r2 = (-B - sqrt_delta) / (2*A);
             return [ r1, r2 ];
         } else if (B != 0) {
             return [ -C / B ]
@@ -26,7 +26,7 @@ window.gallifreyan.util = {
         while (angle < start_angle) {
             angle += Math.TWOPI;
         }
-        end_angle = start_angle + Math.TWOPI;
+        var end_angle = start_angle + Math.TWOPI;
         while (angle > end_angle) {
             angle -= Math.TWOPI;
         }
@@ -66,7 +66,7 @@ window.gallifreyan.util = {
     line_equation: function(start_x, start_y, end_x, end_y) {
         // Line equation is:  y = A*X + B
         // Except when it's a vertical line, then it's:  x = A*y + B
-        result = {
+        var result = {
             a: 0,
             b: 0,
             vertical: false

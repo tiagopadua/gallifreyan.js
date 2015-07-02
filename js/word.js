@@ -63,14 +63,14 @@ window.gallifreyan.Word.prototype.setDimensions = function() {
             var sin_alpha = Math.sin(alpha);
 
             // value to calculate new word radius
-            char_max_diameter = 2 * this.arcs_circle.radius * Math.sin(alpha);
+            char_max_diameter = 2 * this.arcs_circle.radius * sin_alpha;
             var new_arcs_circle = this.positionChars(char_max_diameter, true);
             this.arcs_circle.radius = new_arcs_circle.radius;
             this.arcs_circle.center.x = new_arcs_circle.center.x;
             this.arcs_circle.center.y = new_arcs_circle.center.y;
 
             // final value
-            char_max_diameter = 2 * this.arcs_circle.radius * Math.sin(alpha);
+            char_max_diameter = 2 * this.arcs_circle.radius * sin_alpha;
 
             if (this.chars.length == 2) {
                 char_max_diameter *= .93;

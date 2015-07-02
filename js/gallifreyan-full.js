@@ -1,3 +1,5 @@
+/* global gallifreyan */
+
 // Organize everything in the object 'gallifreyan'
 window.gallifreyan = window.gallifreyan || {};
 
@@ -33,7 +35,7 @@ window.gallifreyan.Graphic.prototype.draw = function(canvas) {
     if ((typeof this.canvas === 'undefined') || (this.canvas === null)) {
         return;
     }
-    context = this.canvas.getContext("2d");
+    var context = this.canvas.getContext("2d");
     //context.shadowBlur = 5;
     //context.shadowColor = "rgba(255,255,0,.4)";
     //context.shadowColor = "rgba(60,180,220,.4)";
@@ -289,8 +291,8 @@ window.gallifreyan.Arc.prototype.intersectPoints = function(target) {
     }
 
     if (target.name == 'Line') {
-        isect_points = window.gallifreyan.util.isect_line_circle(target, this.circle);
-        result = [];
+        var isect_points = window.gallifreyan.util.isect_line_circle(target, this.circle);
+        var result = [];
         for (i in isect_points) {
             point = isect_points[i];
             if (this.containsPoint(point) && target.boxContains(point)) {
@@ -326,7 +328,7 @@ window.gallifreyan.Arc.prototype.containsPoint = function(point) {
     if (typeof point === 'undefined') {
         return false;
     }
-    angle = Math.atan2(point.y - this.circle.center.y, point.x - this.circle.center.x);
+    var angle = Math.atan2(point.y - this.circle.center.y, point.x - this.circle.center.x);
     if ((angle >= this.begin_angle) && (angle <= this.end_angle)) {
         return true;
     }

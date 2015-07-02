@@ -23,8 +23,6 @@ window.gallifreyan.Sentence.prototype.draw = function(canvas) {
     context.fillStyle = background;
     context.fillRect(0, 0, canvas.width, canvas.height);
     var i = null;
-    var arc = null;
-    var word = null;
     this.outside_circle.draw(canvas);
     this.inside_circle.draw(canvas);
     for (i in this.words) {
