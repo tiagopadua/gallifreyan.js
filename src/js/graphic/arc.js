@@ -1,20 +1,23 @@
+
 /******************************** ARC ****************************************/
-window.gallifreyan.Arc = function(x, y, r, begin, end) {
+
+PUBLIC.Arc = function(x, y, r, begin, end) {
     this.name = "Arc";
-    this.circle = new window.gallifreyan.Circle(x, y, r)
+    this.circle = new PUBLIC.Circle(x, y, r);
     this.begin_angle = typeof begin !== 'undefined' ? begin : 0;
     this.end_angle = typeof end !== 'undefined' ? end : Math.TWOPI;
-}
-window.gallifreyan.Arc.prototype = new gallifreyan.Graphic();
-window.gallifreyan.Arc.prototype._pre_draw = window.gallifreyan.Arc.prototype._draw;
-window.gallifreyan.Arc.prototype._draw = function(ctx) {
+};
+
+PUBLIC.Arc.prototype = new PUBLIC.Graphic();
+PUBLIC.Arc.prototype._pre_draw = PUBLIC.Arc.prototype._draw;
+PUBLIC.Arc.prototype._draw = function(ctx) {
     // Call the "parent" class's method
     this._pre_draw(ctx);
     ctx.arc(this.circle.center.x, this.circle.center.y, this.circle.radius, this.begin_angle, this.end_angle);
-}
-window.gallifreyan.Arc.prototype.intersectPoints = function(target) {
-    var i = null;
-    var point = null;
+};
+
+PUBLIC.Arc.prototype.intersectPoints = function(target) {
+    var i, point, isect_points, result;
     var default_result = [];
 
     // Discover the target type
@@ -26,8 +29,8 @@ window.gallifreyan.Arc.prototype.intersectPoints = function(target) {
     }
 
     if (target.name == 'Line') {
-        var isect_points = window.gallifreyan.util.isect_line_circle(target, this.circle);
-        var result = [];
+        isect_points = PUBLIC.util.isect_line_circle(target, this.circle);
+        result = [];
         for (i in isect_points) {
             point = isect_points[i];
             if (this.containsPoint(point) && target.boxContains(point)) {
@@ -36,7 +39,7 @@ window.gallifreyan.Arc.prototype.intersectPoints = function(target) {
         }
         return result;
     } else if (target.name == 'Circle') {
-        isect_points = window.gallifreyan.util.isect_circle_circle(this.circle, target);
+        isect_points = PUBLIC.util.isect_circle_circle(this.circle, target);
         result = [];
         for (i in isect_points) {
             point = isect_points[i];
@@ -46,7 +49,7 @@ window.gallifreyan.Arc.prototype.intersectPoints = function(target) {
         }
         return result;
     } else if (target.name == 'Arc') {
-        isect_points = window.gallifreyan.util.isect_circle_circle(this.circle, target.circle);
+        isect_points = PUBLIC.util.isect_circle_circle(this.circle, target.circle);
         result = [];
         for (i in isect_points) {
             point = isect_points[i];
@@ -58,8 +61,9 @@ window.gallifreyan.Arc.prototype.intersectPoints = function(target) {
     }
 
     return default_result;
-}
-window.gallifreyan.Arc.prototype.containsPoint = function(point) {
+};
+
+PUBLIC.Arc.prototype.containsPoint = function(point) {
     if (typeof point === 'undefined') {
         return false;
     }
@@ -68,8 +72,9 @@ window.gallifreyan.Arc.prototype.containsPoint = function(point) {
         return true;
     }
     return false;
-}
-window.gallifreyan.Arc.prototype.isMouseOver = function(mouse_x, mouse_y) {
+};
+
+PUBLIC.Arc.prototype.isMouseOver = function(mouse_x, mouse_y) {
     if (!this.circle.isMouseOver(mouse_x, mouse_y)) {
         return false;
     }
@@ -89,4 +94,4 @@ window.gallifreyan.Arc.prototype.isMouseOver = function(mouse_x, mouse_y) {
     var match_angle = (mouse_angle >= begin_angle) && (mouse_angle <= end_angle);
 
     return match_angle;
-}
+};

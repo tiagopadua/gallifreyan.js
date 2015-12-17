@@ -1,5 +1,8 @@
+/* global PUBLIC */
+
 /*************************** BASE DRAWING OBJECT *****************************/
-window.gallifreyan.Graphic = function(targetCanvas) {
+
+PUBLIC.Graphic = function(targetCanvas) {
     this.name = "Graphic";
     this.canvas = typeof targetCanvas !== 'undefined' ? targetCanvas : null;
     //this.line_color = "#ffffff";
@@ -7,14 +10,16 @@ window.gallifreyan.Graphic = function(targetCanvas) {
     //this.line_color = "#87b8e7";
     this.line_width = 2;
     this.visible = true;
-}
-window.gallifreyan.Graphic.prototype._draw = function(ctx) {
+};
+
+PUBLIC.Graphic.prototype._draw = function(ctx) {
     // Intended to be inherited/overwritten
     ctx.strokeStyle = this.line_color;
     ctx.lineWidth = this.line_width;
     ctx.lineCap = "round";
-}
-window.gallifreyan.Graphic.prototype.draw = function(canvas) {
+};
+
+PUBLIC.Graphic.prototype.draw = function(canvas) {
     if (!this.visible) {
         return;
     }
@@ -34,4 +39,4 @@ window.gallifreyan.Graphic.prototype.draw = function(canvas) {
     context.beginPath();
     this._draw(context);
     context.stroke();
-}
+};
