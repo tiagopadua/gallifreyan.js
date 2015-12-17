@@ -3,9 +3,7 @@
 
 <head>
  <title>Gallifreyan Translator</title>
- <link href="../css/bootstrap.min.css" rel="stylesheet" type="text/css">
- <link href="../css/bootstrap-responsive.min.css" rel="stylesheet" type="text/css">
- <link href="../css/dr_who.css" rel="stylesheet" type="text/css">
+ <link href="dr_who.css" rel="stylesheet" type="text/css">
 </head>
 
 <body>
@@ -23,17 +21,7 @@
 
  <!-- 'abajatatha chekesheye dilirizi fomosongo gunuvuquu hapawaxa' -->
 
- <script type="text/javascript" src="../js/start.js"></script>
- <script type="text/javascript" src="../js/graphic.js"></script>
- <script type="text/javascript" src="../js/point.js"></script>
- <script type="text/javascript" src="../js/line.js"></script>
- <script type="text/javascript" src="../js/circle.js"></script>
- <script type="text/javascript" src="../js/arc.js"></script>
- <script type="text/javascript" src="../js/sentence.js"></script>
- <script type="text/javascript" src="../js/word.js"></script>
- <script type="text/javascript" src="../js/char.js"></script>
- <script type="text/javascript" src="../js/util.js"></script>
- <script type="text/javascript" src="../js/intersect.js"></script>
+ <script type="text/javascript" src="../dist/gallifreyan.js"></script>
  <script language="javascript">
 
 var draw_target = document.getElementById("canvas");
@@ -69,7 +57,7 @@ document.getElementById('download_jpg').onclick = function() {
 
 document.getElementById("guidelines").onchange = function(e){
   if(e) {
-    gallifreyan.draw_guidelines = e.target.checked;
+    gallifreyan.options.guidelinesEnabled = e.target.checked;
     sentence.draw(draw_target)
   }
 };
