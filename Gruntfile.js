@@ -1,4 +1,4 @@
-module.exports = function(grunt) {
+module.exports = function (grunt) {
 
     // Insert inline files on "// !include file.ext" or "/* !include file.ext */"
     // TODO: detect and block recursive includes
@@ -15,7 +15,7 @@ module.exports = function(grunt) {
             currentMatch = null,
             fs = require('fs');
 
-        for (i=0; i<l; i++) {
+        for (i = 0; i < l; i++) {
             currentMatch = matches[i];
 
             // Extract filename
@@ -65,9 +65,8 @@ module.exports = function(grunt) {
         },
         shell: {
             publish: {
-                // OK, nobody has my private key
-                // TODO: receive the last value (destination) as grunt command-line argument (if possible)
-                command: 'scp -r -i ~/dev/aws/ec2-private.pem dist ec2-user@ec2-52-21-171-112.compute-1.amazonaws.com:~/gallifreyan.js/'
+                // OK, nobody has my ssh config
+                command: 'scp -r dist tiagopadua:~/gallifreyan.js/'
             }
         }
     });
