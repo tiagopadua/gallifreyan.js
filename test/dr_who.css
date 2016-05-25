@@ -1,3 +1,11 @@
+
+@font-face {
+    font-family: 'DoctorWho';
+    src: url('drwho.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 .blueprint {
   padding: 10px;
   /*background-color: #00244c;
