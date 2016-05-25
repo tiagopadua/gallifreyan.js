@@ -1,4 +1,4 @@
-(function(context) {
+(function (context) {
 
     // Organize everything in the object 'gallifreyan'
     var PUBLIC = context.gallifreyan || {};
@@ -18,8 +18,8 @@
     };
     
     /*****************************************************************************
-    *     The files below are included by 'grunt' (defined on Gruntfile.js)     *
-    *****************************************************************************/
+     *     The files below are included by 'grunt' (processed on Gruntfile.js)   *
+     *****************************************************************************/
     
     // !include src/js/graphic/graphic.js
     // !include src/js/graphic/point.js
