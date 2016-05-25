@@ -1,4 +1,4 @@
-(function(context) {
+(function (context) {
 
     // Organize everything in the object 'gallifreyan'
     var PUBLIC = context.gallifreyan || {};
@@ -18,8 +18,8 @@
     };
     
     /*****************************************************************************
-    *     The files below are included by 'grunt' (defined on Gruntfile.js)     *
-    *****************************************************************************/
+     *     The files below are included by 'grunt' (processed on Gruntfile.js)   *
+     *****************************************************************************/
     
     /* global PUBLIC */
 
@@ -398,7 +398,7 @@ PUBLIC.Arc.prototype.isMouseOver = function(mouse_x, mouse_y) {
     
 /******************************* SENTENCE ************************************/
 
-PUBLIC.Sentence = function(text, left, top, size) {
+PUBLIC.Sentence = function (text, left, top, size) {
     this.text = typeof text !== 'undefined' ? text : '';
     this.size = typeof size !== 'undefined' ? size : 300;
     this.left = typeof left !== 'undefined' ? left : 0;
@@ -407,30 +407,34 @@ PUBLIC.Sentence = function(text, left, top, size) {
     this.center_y = this.top + this.size/2;
     this.outside_circle = new PUBLIC.Circle(this.center_x, this.center_y, this.size/2);
     this.outside_circle.line_width *= 1.4;
-    this.inside_circle = new PUBLIC.Circle(this.center_x, this.center_y, this.size/2-6);
+    this.inside_circle = new PUBLIC.Circle(this.center_x, this.center_y, this.size/2 - this.outside_circle.line_width - 1);
     this.words = [];
     this.setText(text);
 };
 
-PUBLIC.Sentence.prototype.draw = function(canvas) {
-    // clear first
+PUBLIC.Sentence.prototype.draw = function (canvas) {
+    // Clear whole canvas first
     var context = canvas.getContext("2d");
     context.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Add background
     var background = context.createLinearGradient(0, 0, canvas.width, canvas.height);
     background.addColorStop(0, '#00345c');
     //background.addColorStop(1, '#001940');
     background.addColorStop(1, '#00112b');
     context.fillStyle = background;
     context.fillRect(0, 0, canvas.width, canvas.height);
-    var i = null;
+
     this.outside_circle.draw(canvas);
     this.inside_circle.draw(canvas);
+
+    var i = null;
     for (i in this.words) {
         this.words[i].draw(canvas);
     }
 };
 
-PUBLIC.Sentence.prototype.setText = function(text) {
+PUBLIC.Sentence.prototype.setText = function (text) {
     var i = null;
     var w = null;
     var w_object = null;
@@ -466,15 +470,15 @@ PUBLIC.Sentence.prototype.setText = function(text) {
     this.shareModLines();
 };
 
-PUBLIC.Sentence.prototype.preprocessText = function(text) {
-    var next;
+PUBLIC.Sentence.prototype.preprocessText = function (text) {
+    var next, c;
 
     var valid_chars = /[a-z ]/i;
     var e_or_i = /[ei]/i;
     var final_text = '';
 
     for (var i=0; i<text.length; ++i) {
-        var c = text[i];
+        c = text[i];
         if (!valid_chars.test(c)) {
             continue;
         }
@@ -507,7 +511,7 @@ PUBLIC.Sentence.prototype.preprocessText = function(text) {
     return final_text;
 };
 
-PUBLIC.Sentence.prototype.shareModLines = function() {
+PUBLIC.Sentence.prototype.shareModLines = function () {
     var i, j, w, c, c2;
     var all_chars = [];
 
@@ -532,7 +536,7 @@ PUBLIC.Sentence.prototype.shareModLines = function() {
     }
 };
 
-PUBLIC.Sentence.prototype.mouseOverObjects = function(mouse_x, mouse_y) {
+PUBLIC.Sentence.prototype.mouseOverObjects = function (mouse_x, mouse_y) {
     var object_list = [];
     if (this.outside_circle.isMouseOver(mouse_x, mouse_y)) {
         object_list.push(this.outside_circle);
@@ -550,7 +554,7 @@ PUBLIC.Sentence.prototype.mouseOverObjects = function(mouse_x, mouse_y) {
     return object_list;
 };
 
-PUBLIC.Sentence.prototype.setLineColor = function(new_color) {
+PUBLIC.Sentence.prototype.setLineColor = function (new_color) {
     this.inside_circle.line_color = new_color;
     this.outside_circle.line_color = new_color;
     for (var i in this.words) {
